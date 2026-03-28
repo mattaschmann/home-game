@@ -1,0 +1,126 @@
+.buyin-modal {
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 20px var(--shadow);
+  animation: slideIn 0.2s ease;
+}
+
+.buyin-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.buyin-input-group {
+  display: flex;
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  transition: var(--transition);
+}
+
+.buyin-input-group:focus-within {
+  border-color: var(--accent);
+}
+
+.currency-symbol {
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  margin-right: var(--spacing-xs);
+}
+
+.buyin-input {
+  flex: 1;
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
+  background: none;
+  color: var(--text-primary);
+  outline: none;
+  min-width: 0;
+}
+
+.buyin-input::placeholder {
+  color: var(--text-muted);
+}
+
+.preset-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.preset-button {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.preset-button:hover {
+  background: var(--hover);
+}
+
+.preset-button:active {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.buyin-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: space-between;
+}
+
+.buyin-button {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.buyin-button.cancel {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.buyin-button.cancel:hover {
+  background: var(--hover);
+}
+
+.buyin-button.confirm {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.buyin-button.confirm:hover {
+  opacity: 0.9;
+}
+
+.buyin-button.confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .buyin-modal {
+    padding: var(--spacing-sm);
+  }
+  
+  .buyin-input {
+    font-size: 1.5rem;
+  }
+}

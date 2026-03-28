@@ -1,0 +1,114 @@
+.add-player {
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.add-player-input-wrapper {
+  position: relative;
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.add-player-input {
+  flex: 1;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm);
+  font-size: 1rem;
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+.add-player-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.add-player-input.error {
+  border-color: var(--loss);
+}
+
+.add-player-input::placeholder {
+  color: var(--text-muted);
+}
+
+.add-player-button {
+  background: var(--accent);
+  color: var(--bg-primary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.add-player-button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.add-player-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.player-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: var(--spacing-xs);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 12px var(--shadow);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.suggestion-item {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-sm);
+  text-align: left;
+  color: var(--text-primary);
+  background: transparent;
+  transition: var(--transition);
+  border-bottom: 1px solid var(--border);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.selected {
+  background: var(--hover);
+}
+
+.error-message {
+  color: var(--loss);
+  font-size: 0.875rem;
+  margin-top: var(--spacing-xs);
+}
+
+@media (max-width: 480px) {
+  .add-player {
+    padding: var(--spacing-sm);
+  }
+  
+  .add-player-input-wrapper {
+    flex-direction: column;
+  }
+  
+  .add-player-button {
+    width: 100%;
+  }
+  
+  .player-suggestions {
+    position: static;
+    margin-top: var(--spacing-sm);
+  }
+}
