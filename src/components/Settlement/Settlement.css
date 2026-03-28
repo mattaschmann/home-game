@@ -77,18 +77,16 @@
   background: var(--bg-secondary);
   border-radius: var(--border-radius);
   padding: var(--spacing-sm);
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-sm);
 }
 
 .standing-row {
-  display: flex;
-  flex-direction: row;
+  display: contents;
   align-items: center;
   gap: var(--spacing-sm);
   font-size: 0.95rem;
-  flex-wrap: nowrap;
 }
 
 .standing-player {
@@ -96,7 +94,6 @@
   flex-direction: column;
   gap: 0.1rem;
   flex: 1;
-  min-width: 140px;
 }
 
 .standing-name {
@@ -113,6 +110,7 @@
   text-align: right;
   min-width: 88px;
   margin-left: auto;
+  align-self: center;
 }
 
 .stack-chip {
@@ -166,7 +164,6 @@
   }
 
   .standing-net {
-    text-align: left;
     width: 100%;
   }
 }

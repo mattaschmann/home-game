@@ -81,7 +81,7 @@ export default function Settlement({ players, onRequestStackEntry }) {
             const hasStack = player.finalStackRaw !== '';
 
             return (
-              <div key={player.id} className="standing-row with-stack">
+              <div key={player.id} className="standing-row">
                 <div className="standing-player">
                   <span className="standing-name">{player.name}</span>
                   <span className="standing-invested">{formatCurrency(player.invested)}</span>
