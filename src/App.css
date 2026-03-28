@@ -49,6 +49,64 @@
   gap: var(--spacing-sm);
 }
 
+.settings-panel {
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.settings-hint {
+  color: var(--text-muted);
+  max-width: 360px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-secondary);
+  min-width: 220px;
+}
+
+.settings-field span {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+}
+
+.settings-input {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  background: var(--bg-secondary);
+}
+
+.settings-input:focus-within {
+  border-color: var(--accent);
+}
+
+.settings-input .currency-prefix {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-right: 0.3rem;
+}
+
+.settings-input input {
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: 1rem;
+  text-align: right;
+  width: 90px;
+}
+
 .control-button {
   background: var(--accent);
   color: var(--bg-primary);

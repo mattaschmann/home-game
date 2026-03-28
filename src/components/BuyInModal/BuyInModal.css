@@ -16,6 +16,14 @@
   text-align: center;
 }
 
+.buyin-default-note {
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: calc(-1 * var(--spacing-sm));
+  margin-bottom: var(--spacing-md);
+  font-size: 0.95rem;
+}
+
 .buyin-input-group {
   display: flex;
   align-items: center;
@@ -50,32 +58,6 @@
 
 .buyin-input::placeholder {
   color: var(--text-muted);
-}
-
-.preset-buttons {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-}
-
-.preset-button {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  padding: var(--spacing-sm);
-  border-radius: var(--border-radius);
-  font-size: 1rem;
-  font-weight: 500;
-  transition: var(--transition);
-}
-
-.preset-button:hover {
-  background: var(--hover);
-}
-
-.preset-button:active {
-  background: var(--accent);
-  color: var(--bg-primary);
 }
 
 .buyin-actions {

@@ -1,98 +1,80 @@
 import React from 'react';
-import {
-  calculateTotalInvested,
-  calculateNetAmount,
-  formatCurrency,
-  formatNetAmount,
-  parseCurrencyInput
-} from '../../utils/calculations';
+import { calculateTotalInvested, formatCurrency } from '../../utils/calculations';
 import './PlayerCard.css';
+
+const IconButton = ({ label, onClick, children, disabled }) => (
+  <button
+    className="icon-button"
+    aria-label={label}
+    onClick={onClick}
+    disabled={disabled}
+  >
+    {children}
+  </button>
+);
+
+const PlusIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+const UndoIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M9 7H5v4" />
+    <path d="M5 11c1.5-3 4.5-5 8-5a7 7 0 110 14" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M6 7h12" />
+    <path d="M10 11v6" />
+    <path d="M14 11v6" />
+    <path d="M8 7l1-2h6l1 2" />
+    <path d="M9 21h6" />
+  </svg>
+);
 
 export default function PlayerCard({
   player,
   onRequestBuyIn,
-  onFinalStackChange,
-  onRemovePlayer
+  onRemovePlayer,
+  onUndoBuyIn
 }) {
   const totalInvested = calculateTotalInvested(player.buyIns);
-  const finalStackValue = player.finalStack ?? '';
-  const numericFinalStack = parseCurrencyInput(finalStackValue);
-  const netAmount = calculateNetAmount(numericFinalStack, totalInvested);
-  const netDisplay = formatNetAmount(netAmount);
-
-  const handleFinalStackInput = (event) => {
-    const { value } = event.target;
-    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-      onFinalStackChange(player.id, value);
-    }
-  };
-
-  const handleClearStack = () => {
-    onFinalStackChange(player.id, '');
-  };
-
   const buyInCount = player.buyIns.length;
 
   return (
-    <article className="player-card">
-      <header className="player-card__header">
-        <div>
-          <p className="player-label">Player</p>
-          <h3 className="player-name">{player.name}</h3>
-        </div>
-        <button
-          className="remove-player"
-          onClick={() => onRemovePlayer(player.id)}
-          aria-label={`Remove ${player.name}`}
-        >
-          ×
-        </button>
-      </header>
-
-      <div className="player-card__stats">
-        <div className="stat-block">
-          <span className="stat-label">Buy-ins</span>
-          <strong className="stat-value">{buyInCount}</strong>
-          <button
-            className="buy-in-trigger"
-            onClick={() => onRequestBuyIn(player.id)}
-          >
-            + Add Buy-in
-          </button>
+    <article className="player-row">
+      <div className="row-primary">
+        <div className="player-identity">
+          <span className="player-name">{player.name}</span>
+          <span className="buyin-chip">{buyInCount}</span>
         </div>
 
-        <div className="stat-block">
-          <span className="stat-label">Invested</span>
-          <strong className="stat-value">{formatCurrency(totalInvested)}</strong>
-        </div>
-
-        <div className="stat-block">
-          <span className="stat-label">Net</span>
-          <strong className={`stat-value ${netDisplay.className}`}>
-            {netDisplay.text}
-          </strong>
+        <div className="player-metrics">
+          <div className="metric">
+            <span className="metric-value">{formatCurrency(totalInvested)}</span>
+          </div>
         </div>
       </div>
 
-      <div className="final-stack">
-        <div className="final-stack__header">
-          <span>Final Stack</span>
-          {finalStackValue && (
-            <button className="clear-stack" onClick={handleClearStack}>
-              Clear
-            </button>
-          )}
-        </div>
-        <div className="currency-input">
-          <span className="currency-prefix">$</span>
-          <input
-            type="text"
-            inputMode="decimal"
-            pattern="[0-9]*\.?[0-9]*"
-            value={finalStackValue}
-            onChange={handleFinalStackInput}
-            placeholder="0.00"
-          />
+      <div className="row-secondary">
+        <div className="player-actions">
+          <IconButton label={`Add buy-in for ${player.name}`} onClick={() => onRequestBuyIn(player.id)}>
+            <PlusIcon />
+          </IconButton>
+          <IconButton
+            label={`Undo last buy-in for ${player.name}`}
+            onClick={() => onUndoBuyIn(player.id)}
+            disabled={player.buyIns.length === 0}
+          >
+            <UndoIcon />
+          </IconButton>
+          <IconButton label={`Remove ${player.name}`} onClick={() => onRemovePlayer(player.id)}>
+            <TrashIcon />
+          </IconButton>
         </div>
       </div>
     </article>

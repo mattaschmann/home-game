@@ -1,150 +1,120 @@
-.player-card {
-  background: var(--bg-card);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-md);
+.player-row {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-  animation: slideIn 0.2s ease;
-}
-
-.player-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.player-label {
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-  margin-bottom: 0.25rem;
-}
-
-.player-name {
-  font-size: 1.4rem;
-  margin: 0;
-}
-
-.remove-player {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  font-size: 1.25rem;
-  color: var(--text-secondary);
-}
-
-.remove-player:hover {
-  background: rgba(255, 68, 102, 0.2);
-  color: var(--loss);
-}
-
-.player-card__stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   gap: var(--spacing-sm);
 }
 
-.stat-block {
-  background: var(--bg-secondary);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-sm);
+.player-row:last-child {
+  border-bottom: none;
+}
+
+.row-primary {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.stat-label {
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-}
-
-.stat-value {
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.buy-in-trigger {
-  margin-top: auto;
-  background: var(--accent);
-  color: var(--bg-primary);
-  border-radius: var(--border-radius);
-  padding: 0.5rem;
-  font-weight: 600;
-}
-
-.buy-in-trigger:hover {
-  opacity: 0.9;
-}
-
-.final-stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.final-stack__header {
-  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
   justify-content: space-between;
   align-items: center;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
 }
 
-.clear-stack {
+.player-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  min-width: 160px;
+}
+
+.player-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.buyin-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
 
-.clear-stack:hover {
-  color: var(--loss);
+.player-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  flex: 1;
+  justify-content: flex-end;
 }
 
-.currency-input {
+.metric {
   display: flex;
   align-items: center;
-  background: var(--bg-secondary);
-  border: 2px solid var(--border);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-sm);
+  gap: 0.35rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
 }
 
-.currency-input:focus-within {
-  border-color: var(--accent);
-}
-
-.currency-prefix {
-  font-size: 1.25rem;
-  color: var(--text-muted);
-  margin-right: 0.35rem;
-}
-
-.currency-input input {
-  flex: 1;
-  font-size: 1.5rem;
+.metric-value {
   font-weight: 600;
-  background: none;
-  border: none;
   color: var(--text-primary);
 }
 
-.currency-input input::placeholder {
-  color: var(--text-muted);
+.row-secondary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
-@media (max-width: 480px) {
-  .player-card {
-    padding: var(--spacing-sm);
+.player-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.icon-button {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  display: grid;
+  place-items: center;
+  color: var(--text-primary);
+}
+
+.icon-button:hover {
+  border-color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.icon-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.icon-button:disabled:hover {
+  border-color: var(--border);
+  background: transparent;
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 540px) {
+  .row-secondary {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .player-card__stats {
-    grid-template-columns: 1fr;
+  .player-metrics {
+    justify-content: flex-start;
   }
 }

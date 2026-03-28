@@ -18,6 +18,9 @@ import { parseCurrencyInput } from './utils/calculations';
 function App() {
   const [players, setPlayers] = useState(() => loadPlayers());
   const [settings, setSettings] = useState(() => loadSettings());
+  const [defaultBuyInInput, setDefaultBuyInInput] = useState(() =>
+    (loadSettings().defaultBuyIn ?? 0).toFixed(2)
+  );
   const [buyInModal, setBuyInModal] = useState({ isOpen: false, playerId: null });
   const [confirmState, setConfirmState] = useState({ isOpen: false, action: null, payload: null });
 
@@ -79,6 +82,28 @@ function App() {
     setPlayers((prev) =>
       prev.map((player) =>
         player.id === playerId ? { ...player, finalStack: value } : player
+      )
+    );
+  };
+
+  const handleDefaultBuyInChange = (value) => {
+    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+      setDefaultBuyInInput(value);
+      const parsed = Math.max(0, parseCurrencyInput(value));
+      setSettings((prev) => ({ ...prev, defaultBuyIn: parsed }));
+    }
+  };
+
+  const handleDefaultBuyInBlur = () => {
+    setDefaultBuyInInput((settings.defaultBuyIn ?? 0).toFixed(2));
+  };
+
+  const handleUndoBuyIn = (playerId) => {
+    setPlayers((prev) =>
+      prev.map((player) =>
+        player.id === playerId && player.buyIns.length > 0
+          ? { ...player, buyIns: player.buyIns.slice(0, -1) }
+          : player
       )
     );
   };
@@ -216,6 +241,28 @@ function App() {
         </button>
       </div>
 
+      <section className="settings-panel">
+        <div>
+          <p className="eyebrow">Game Settings</p>
+          <p className="settings-hint">Choose the default amount that pre-fills every buy-in.</p>
+        </div>
+        <label className="settings-field">
+          <span>Default Buy-in</span>
+          <div className="settings-input">
+            <span className="currency-prefix">$</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*\.?[0-9]*"
+              value={defaultBuyInInput}
+              onChange={(event) => handleDefaultBuyInChange(event.target.value)}
+              onBlur={handleDefaultBuyInBlur}
+              placeholder="0.00"
+            />
+          </div>
+        </label>
+      </section>
+
       {players.length === 0 ? (
         <div className="empty-state">
           <p>No players yet.</p>
@@ -228,14 +275,14 @@ function App() {
               key={player.id}
               player={player}
               onRequestBuyIn={openBuyInModal}
-              onFinalStackChange={handleFinalStackChange}
               onRemovePlayer={handleRemovePlayer}
+              onUndoBuyIn={handleUndoBuyIn}
             />
           ))}
         </div>
       )}
 
-      <Settlement players={players} />
+      <Settlement players={players} onFinalStackChange={handleFinalStackChange} />
 
       <BuyInModal
         isOpen={buyInModal.isOpen}

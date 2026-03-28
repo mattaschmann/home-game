@@ -46,11 +46,6 @@ export default function BuyInModal({
     }
   };
 
-  const handlePresetClick = (presetAmount) => {
-    setAmount(presetAmount.toFixed(2));
-    inputRef.current?.focus();
-  };
-
   const handleConfirm = () => {
     const parsedAmount = parseCurrencyInput(amount);
     if (parsedAmount > 0) {
@@ -70,6 +65,10 @@ export default function BuyInModal({
     <div className="modal-backdrop" onClick={handleBackdropClick}>
       <div className="buyin-modal">
         <h3 className="buyin-title">Add Buy-in for {playerName || 'Player'}</h3>
+        <p className="buyin-default-note">
+          Using table default {formatCurrency(defaultAmount)}. Update this amount if this
+          buy-in is different.
+        </p>
         
         <div className="buyin-input-group">
           <span className="currency-symbol">$</span>
@@ -84,27 +83,6 @@ export default function BuyInModal({
             onKeyDown={handleKeyDown}
             placeholder="0.00"
           />
-        </div>
-
-        <div className="preset-buttons">
-          <button 
-            className="preset-button" 
-            onClick={() => handlePresetClick(10)}
-          >
-            $10
-          </button>
-          <button 
-            className="preset-button" 
-            onClick={() => handlePresetClick(20)}
-          >
-            $20
-          </button>
-          <button 
-            className="preset-button" 
-            onClick={() => handlePresetClick(50)}
-          >
-            $50
-          </button>
         </div>
 
         <div className="buyin-actions">
