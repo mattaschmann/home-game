@@ -2,12 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { parseCurrencyInput, formatCurrency } from '../../utils/calculations';
 import './BuyInModal.css';
 
-export default function BuyInModal({ 
-  isOpen, 
-  playerName, 
+export default function BuyInModal({
+  isOpen,
+  playerName,
+  title,
+  description,
   defaultAmount = 10,
-  onConfirm, 
-  onCancel 
+  confirmLabel = 'Add',
+  confirmTextBuilder,
+  allowZero = false,
+  onConfirm,
+  onCancel,
+  secondaryActionLabel,
+  onSecondaryAction
 }) {
   const [amount, setAmount] = useState(defaultAmount.toFixed(2));
   const inputRef = useRef(null);
@@ -46,11 +53,21 @@ export default function BuyInModal({
     }
   };
 
+  const resolvedTitle = title ?? `Add Buy-in for ${playerName || 'Player'}`;
+  const resolvedDescription =
+    description ??
+    `Using table default ${formatCurrency(defaultAmount)}. Update this amount if this buy-in is different.`;
+
+  const formatConfirmText =
+    confirmTextBuilder ?? ((value) => `${confirmLabel} ${formatCurrency(value)}`);
+
+  const parsedAmount = parseCurrencyInput(amount);
+  const canConfirm =
+    amount !== '' && (allowZero ? parsedAmount >= 0 : parsedAmount > 0);
+
   const handleConfirm = () => {
-    const parsedAmount = parseCurrencyInput(amount);
-    if (parsedAmount > 0) {
-      onConfirm(parsedAmount);
-    }
+    if (!canConfirm) return;
+    onConfirm(parsedAmount);
   };
 
   const handleKeyDown = (e) => {
@@ -64,11 +81,8 @@ export default function BuyInModal({
   return (
     <div className="modal-backdrop" onClick={handleBackdropClick}>
       <div className="buyin-modal">
-        <h3 className="buyin-title">Add Buy-in for {playerName || 'Player'}</h3>
-        <p className="buyin-default-note">
-          Using table default {formatCurrency(defaultAmount)}. Update this amount if this
-          buy-in is different.
-        </p>
+        <h3 className="buyin-title">{resolvedTitle}</h3>
+        <p className="buyin-default-note">{resolvedDescription}</p>
         
         <div className="buyin-input-group">
           <span className="currency-symbol">$</span>
@@ -92,12 +106,21 @@ export default function BuyInModal({
           >
             Cancel
           </button>
+          {secondaryActionLabel && onSecondaryAction && (
+            <button
+              className="buyin-button ghost"
+              type="button"
+              onClick={onSecondaryAction}
+            >
+              {secondaryActionLabel}
+            </button>
+          )}
           <button 
             className="buyin-button confirm" 
             onClick={handleConfirm}
-            disabled={!amount || parseCurrencyInput(amount) <= 0}
+            disabled={!canConfirm}
           >
-            Add {formatCurrency(parseCurrencyInput(amount))}
+            {canConfirm ? formatConfirmText(parsedAmount) : confirmLabel}
           </button>
         </div>
       </div>

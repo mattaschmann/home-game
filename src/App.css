@@ -65,46 +65,36 @@
   max-width: 360px;
 }
 
-.settings-field {
+.settings-default-trigger {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  color: var(--text-secondary);
-  min-width: 220px;
+  min-width: 180px;
+  gap: 0.25rem;
+  cursor: pointer;
+  text-align: left;
 }
 
-.settings-field span {
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 1px;
-}
-
-.settings-input {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.3rem 0.85rem;
-  background: var(--bg-secondary);
-}
-
-.settings-input:focus-within {
+.settings-default-trigger:hover,
+.settings-default-trigger:focus-visible {
   border-color: var(--accent);
+  outline: none;
 }
 
-.settings-input .currency-prefix {
-  font-size: 0.95rem;
+.settings-default-label {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
   color: var(--text-muted);
-  margin-right: 0.3rem;
 }
 
-.settings-input input {
-  border: none;
-  background: none;
-  color: var(--text-primary);
+.settings-default-value {
   font-size: 1rem;
-  text-align: right;
-  width: 90px;
+  font-weight: 600;
 }
 
 .control-button {

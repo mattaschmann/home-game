@@ -62,6 +62,7 @@
 
 .buyin-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-sm);
   justify-content: space-between;
 }
@@ -95,6 +96,16 @@
 .buyin-button.confirm:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.buyin-button.ghost {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-secondary);
+}
+
+.buyin-button.ghost:hover {
+  border-color: var(--text-secondary);
 }
 
 @media (max-width: 480px) {

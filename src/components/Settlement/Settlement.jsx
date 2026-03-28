@@ -10,7 +10,7 @@ import {
 } from '../../utils/calculations';
 import './Settlement.css';
 
-export default function Settlement({ players, onFinalStackChange }) {
+export default function Settlement({ players, onRequestStackEntry }) {
   const summary = useMemo(() => {
     const totalInvested = calculateTotalPot(players);
     const totalCashedOut = calculateTotalCashedOut(players);
@@ -19,11 +19,15 @@ export default function Settlement({ players, onFinalStackChange }) {
     const standings = players
       .map((player) => {
         const invested = calculateTotalInvested(player.buyIns);
-        const finalStack = parseCurrencyInput(player.finalStack ?? '');
-        const net = calculateNetAmount(finalStack, invested);
+        const finalStackRaw = player.finalStack ?? '';
+        const finalStackAmount = parseCurrencyInput(finalStackRaw);
+        const net = calculateNetAmount(finalStackAmount, invested);
         return {
           id: player.id,
           name: player.name,
+          invested,
+          finalStackRaw,
+          finalStackAmount,
           net,
           display: formatNetAmount(net)
         };
@@ -39,13 +43,6 @@ export default function Settlement({ players, onFinalStackChange }) {
   }, [players]);
 
   const isBalanced = Math.abs(summary.difference) < 0.01;
-
-  const handleStackChange = (playerId, value) => {
-    if (!onFinalStackChange) return;
-    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-      onFinalStackChange(playerId, value);
-    }
-  };
 
   return (
     <section className="settlement">
@@ -76,55 +73,33 @@ export default function Settlement({ players, onFinalStackChange }) {
         </div>
       </div>
 
-      <div className="stack-manager">
-        <p className="label">Enter final stacks</p>
-        {players.length === 0 ? (
-          <p className="empty-state">Add players to enter their stacks.</p>
-        ) : (
-          <div className="stack-list">
-            {players.map((player) => {
-              const invested = calculateTotalInvested(player.buyIns);
-              const finalStackValue = player.finalStack ?? '';
-              const net = calculateNetAmount(parseCurrencyInput(finalStackValue), invested);
-              const netDisplay = formatNetAmount(net);
-
-              return (
-                <div key={player.id} className="stack-row">
-                  <div className="stack-player">
-                    <span className="stack-name">{player.name}</span>
-                    <span className="stack-invested">{formatCurrency(invested)}</span>
-                  </div>
-                  <div className="stack-controls">
-                    <div className="stack-input">
-                      <span className="currency-prefix">$</span>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        pattern="[0-9]*\.?[0-9]*"
-                        value={finalStackValue}
-                        onChange={(event) => handleStackChange(player.id, event.target.value)}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <span className={`stack-net ${netDisplay.className}`}>{netDisplay.text}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
       <div className="standings">
         {summary.standings.length === 0 ? (
-          <p className="empty-state">Add players to see standings.</p>
+          <p className="empty-state">Add players to enter and settle stacks.</p>
         ) : (
-          summary.standings.map((player) => (
-            <div key={player.id} className="standing-row">
-              <span>{player.name}</span>
-              <span className={player.display.className}>{player.display.text}</span>
-            </div>
-          ))
+          summary.standings.map((player) => {
+            const hasStack = player.finalStackRaw !== '';
+
+            return (
+              <div key={player.id} className="standing-row with-stack">
+                <div className="standing-player">
+                  <span className="standing-name">{player.name}</span>
+                  <span className="standing-invested">{formatCurrency(player.invested)}</span>
+                </div>
+                <button
+                  type="button"
+                  className={`stack-chip ${hasStack ? 'has-value' : ''}`}
+                  onClick={() => onRequestStackEntry?.(player.id)}
+                >
+                  <span className="stack-chip-label">Stack</span>
+                  <span className="stack-chip-value">
+                    {hasStack ? formatCurrency(player.finalStackAmount) : 'Set Stack'}
+                  </span>
+                </button>
+                <span className={`standing-net ${player.display.className}`}>{player.display.text}</span>
+              </div>
+            );
+          })
         )}
       </div>
     </section>
