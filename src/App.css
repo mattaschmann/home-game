@@ -43,76 +43,50 @@
   font-size: 1.5rem;
 }
 
-.app-controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--spacing-sm);
-}
-
-.settings-panel {
-  background: var(--bg-card);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-md);
+.app-actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
 }
 
-.settings-hint {
-  color: var(--text-muted);
-  max-width: 360px;
-}
-
-.settings-default-trigger {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+.action-button {
+  flex: 1;
+  min-width: 140px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--border-radius);
-  color: var(--text-primary);
-  padding: 0.5rem 1rem;
-  display: flex;
-  flex-direction: column;
-  min-width: 180px;
-  gap: 0.25rem;
-  cursor: pointer;
-  text-align: left;
-}
-
-.settings-default-trigger:hover,
-.settings-default-trigger:focus-visible {
-  border-color: var(--accent);
-  outline: none;
-}
-
-.settings-default-label {
-  text-transform: uppercase;
-  font-size: 0.7rem;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-}
-
-.settings-default-value {
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.control-button {
-  background: var(--accent);
-  color: var(--bg-primary);
-  border-radius: var(--border-radius);
-  font-weight: 600;
-}
-
-.control-button.secondary {
   background: var(--bg-card);
   color: var(--text-primary);
   border: 1px solid var(--border);
+  font-weight: 600;
+  transition: var(--transition);
 }
 
-.control-button:disabled {
+.action-button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg-primary);
+}
+
+.action-button.secondary {
+  background: var(--bg-secondary);
+}
+
+.action-button.destructive {
+  background: var(--loss);
+  border-color: var(--loss);
+  color: var(--bg-primary);
+}
+
+.action-button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.action-button:not(:disabled):hover,
+.action-button:not(:disabled):focus-visible {
+  opacity: 0.9;
+  outline: none;
 }
 
 .player-grid {
@@ -143,9 +117,5 @@
 
   .app-header h1 {
     font-size: 2.75rem;
-  }
-
-  .app-controls {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

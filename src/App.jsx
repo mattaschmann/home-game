@@ -20,6 +20,7 @@ function App() {
   const [settings, setSettings] = useState(() => loadSettings());
   const [amountDialog, setAmountDialog] = useState({ isOpen: false, mode: null, playerId: null });
   const [confirmState, setConfirmState] = useState({ isOpen: false, action: null, payload: null });
+  const [isAddPlayerDialogOpen, setAddPlayerDialogOpen] = useState(false);
 
   useEffect(() => {
     savePlayers(players);
@@ -28,16 +29,6 @@ function App() {
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
-
-  const stats = useMemo(() => {
-    const buyIns = players.reduce((total, player) => total + player.buyIns.length, 0);
-    const activeStacks = players.filter((player) => player.finalStack && player.finalStack !== '').length;
-    return {
-      players: players.length,
-      buyIns,
-      activeStacks
-    };
-  }, [players]);
 
   const openBuyInModal = (playerId) => {
     setAmountDialog({ isOpen: true, mode: 'buy-in', playerId });
@@ -56,17 +47,34 @@ function App() {
   };
 
   const handleAddPlayer = (name) => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      return false;
+    }
+
+    const exists = players.some(
+      (player) => player.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+
+    if (exists) {
+      return false;
+    }
+
     setPlayers((prev) => [
       ...prev,
       {
         id: uuidv4(),
-        name,
+        name: trimmedName,
         buyIns: [],
         finalStack: ''
       }
     ]);
-    addPlayerNameToHistory(name);
+    addPlayerNameToHistory(trimmedName);
+    return true;
   };
+
+  const openAddPlayerDialog = () => setAddPlayerDialogOpen(true);
+  const closeAddPlayerDialog = () => setAddPlayerDialogOpen(false);
 
   const handleConfirmDialog = (amount) => {
     switch (amountDialog.mode) {
@@ -274,41 +282,28 @@ function App() {
         </div>
       </header>
 
-      <AddPlayer onAddPlayer={handleAddPlayer} existingPlayers={players} />
-
-      <div className="app-controls">
+      <div className="app-actions">
+        <button className="action-button primary" onClick={openAddPlayerDialog}>
+          Add Player
+        </button>
         <button
-          className="control-button"
+          className="action-button"
           onClick={handleResetValues}
           disabled={!hasValuesToReset}
         >
           Reset All Values
         </button>
         <button
-          className="control-button secondary"
+          className="action-button destructive"
           onClick={handleClearPlayers}
           disabled={players.length === 0}
         >
           Remove All Players
         </button>
-      </div>
-
-      <section className="settings-panel">
-        <div>
-          <p className="eyebrow">Game Settings</p>
-          <p className="settings-hint">Choose the default amount that pre-fills every buy-in.</p>
-        </div>
-        <button
-          type="button"
-          className="settings-default-trigger"
-          onClick={openDefaultBuyInModal}
-        >
-          <span className="settings-default-label">Default Buy-in</span>
-          <span className="settings-default-value">
-            {formatCurrency(settings.defaultBuyIn ?? 0)}
-          </span>
+        <button className="action-button secondary" onClick={openDefaultBuyInModal}>
+          Game Settings
         </button>
-      </section>
+      </div>
 
       {players.length === 0 ? (
         <div className="empty-state">
@@ -349,6 +344,13 @@ function App() {
           onCancel={closeAmountDialog}
         />
       )}
+
+      <AddPlayer
+        isOpen={isAddPlayerDialogOpen}
+        onClose={closeAddPlayerDialog}
+        onAddPlayer={handleAddPlayer}
+        existingPlayers={players}
+      />
 
       <ConfirmDialog
         isOpen={confirmState.isOpen}
