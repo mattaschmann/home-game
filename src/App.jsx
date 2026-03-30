@@ -15,6 +15,60 @@ import {
 } from './utils/storage';
 import { parseCurrencyInput, formatCurrency } from './utils/calculations';
 
+const ActionIconButton = ({ label, icon: Icon, onClick, disabled, variant }) => (
+  <button
+    className={`app-action-button ${variant ?? ''}`}
+    aria-label={label}
+    title={label}
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+  >
+    <span className="app-action-ring">
+      <Icon />
+    </span>
+    <span className="app-action-text">{label}</span>
+  </button>
+);
+
+const AddUserIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+const ResetIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 12a9 9 0 0115-6l2 2" />
+    <path d="M20 8v5h-5" />
+    <path d="M21 12a9 9 0 11-3-6" />
+  </svg>
+);
+
+const BulkRemoveIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M6 7h12" />
+    <path d="M10 11v6" />
+    <path d="M14 11v6" />
+    <path d="M8 7l1-2h6l1 2" />
+    <path d="M9 21h6" />
+  </svg>
+);
+
+const SettingsSliderIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 6h6" />
+    <path d="M14 6h6" />
+    <path d="M4 12h10" />
+    <path d="M18 12h2" />
+    <path d="M4 18h6" />
+    <path d="M14 18h6" />
+    <circle cx="12" cy="6" r="2" />
+    <circle cx="16" cy="12" r="2" />
+    <circle cx="12" cy="18" r="2" />
+  </svg>
+);
+
 function App() {
   const [players, setPlayers] = useState(() => loadPlayers());
   const [settings, setSettings] = useState(() => loadSettings());
@@ -282,27 +336,32 @@ function App() {
         </div>
       </header>
 
-      <div className="app-actions">
-        <button className="action-button primary" onClick={openAddPlayerDialog}>
-          Add Player
-        </button>
-        <button
-          className="action-button"
+      <div className="app-actions" role="group" aria-label="Table controls">
+        <ActionIconButton
+          label="Add Player"
+          icon={AddUserIcon}
+          onClick={openAddPlayerDialog}
+          variant="primary"
+        />
+        <ActionIconButton
+          label="Reset Values"
+          icon={ResetIcon}
           onClick={handleResetValues}
           disabled={!hasValuesToReset}
-        >
-          Reset All Values
-        </button>
-        <button
-          className="action-button destructive"
+        />
+        <ActionIconButton
+          label="Remove All"
+          icon={BulkRemoveIcon}
           onClick={handleClearPlayers}
           disabled={players.length === 0}
-        >
-          Remove All Players
-        </button>
-        <button className="action-button secondary" onClick={openDefaultBuyInModal}>
-          Game Settings
-        </button>
+          variant="destructive"
+        />
+        <ActionIconButton
+          label="Game Settings"
+          icon={SettingsSliderIcon}
+          onClick={openDefaultBuyInModal}
+          variant="secondary"
+        />
       </div>
 
       {players.length === 0 ? (

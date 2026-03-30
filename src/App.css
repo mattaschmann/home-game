@@ -44,49 +44,91 @@
 }
 
 .app-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
 }
 
-.action-button {
-  flex: 1;
-  min-width: 140px;
-  padding: var(--spacing-sm) var(--spacing-md);
+.app-action-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: var(--spacing-xs) 0;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   border-radius: var(--border-radius);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  font-weight: 600;
-  transition: var(--transition);
+  border: none;
+  background: none;
+  width: 100%;
 }
 
-.action-button.primary {
+.app-action-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.app-action-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.app-action-ring {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  place-items: center;
+  color: var(--text-primary);
+}
+
+.app-action-ring svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app-action-button.primary .app-action-ring {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--bg-primary);
 }
 
-.action-button.secondary {
-  background: var(--bg-secondary);
+.app-action-button.secondary .app-action-ring {
+  background: var(--bg-card);
 }
 
-.action-button.destructive {
-  background: var(--loss);
+.app-action-button.destructive .app-action-ring {
+  background: rgba(255, 68, 102, 0.15);
   border-color: var(--loss);
-  color: var(--bg-primary);
+  color: var(--loss);
 }
 
-.action-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.app-action-button:not(.primary):not(:disabled):hover .app-action-ring,
+.app-action-button:not(.primary):not(:disabled):focus-visible .app-action-ring {
+  border-color: var(--text-secondary);
 }
 
-.action-button:not(:disabled):hover,
-.action-button:not(:disabled):focus-visible {
-  opacity: 0.9;
-  outline: none;
+.app-action-text {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.app-action-button.primary .app-action-text {
+  color: var(--text-primary);
+}
+
+.app-action-button.destructive .app-action-text {
+  color: var(--loss);
 }
 
 .player-grid {
