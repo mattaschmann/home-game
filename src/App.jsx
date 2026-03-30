@@ -7,29 +7,34 @@ import Settlement from './components/Settlement/Settlement';
 import BuyInModal from './components/BuyInModal/BuyInModal';
 import ConfirmDialog from './components/ConfirmDialog/ConfirmDialog';
 import {
-  loadPlayers,
-  savePlayers,
-  loadSettings,
-  saveSettings,
+  loadGameState,
+  loadGameStateFromUrl,
+  saveGameState,
   addPlayerNameToHistory
 } from './utils/storage';
 import { parseCurrencyInput, formatCurrency } from './utils/calculations';
 
-const ActionIconButton = ({ label, icon: Icon, onClick, disabled, variant }) => (
-  <button
-    className={`app-action-button ${variant ?? ''}`}
-    aria-label={label}
-    title={label}
-    type="button"
-    onClick={onClick}
-    disabled={disabled}
-  >
-    <span className="app-action-ring">
-      <Icon />
-    </span>
-    <span className="app-action-text">{label}</span>
-  </button>
-);
+const initialGameState = loadGameState();
+
+const ActionIconButton = ({ label, icon, onClick, disabled, variant }) => {
+  const IconComponent = icon;
+
+  return (
+    <button
+      className={`app-action-button ${variant ?? ''}`}
+      aria-label={label}
+      title={label}
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <span className="app-action-ring">
+        <IconComponent />
+      </span>
+      <span className="app-action-text">{label}</span>
+    </button>
+  );
+};
 
 const AddUserIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -70,19 +75,39 @@ const SettingsSliderIcon = () => (
 );
 
 function App() {
-  const [players, setPlayers] = useState(() => loadPlayers());
-  const [settings, setSettings] = useState(() => loadSettings());
+  const [players, setPlayers] = useState(() => initialGameState.players);
+  const [settings, setSettings] = useState(() => initialGameState.settings);
   const [amountDialog, setAmountDialog] = useState({ isOpen: false, mode: null, playerId: null });
   const [confirmState, setConfirmState] = useState({ isOpen: false, action: null, payload: null });
   const [isAddPlayerDialogOpen, setAddPlayerDialogOpen] = useState(false);
 
   useEffect(() => {
-    savePlayers(players);
-  }, [players]);
+    saveGameState({ players, settings });
+  }, [players, settings]);
 
   useEffect(() => {
-    saveSettings(settings);
-  }, [settings]);
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const syncStateFromUrl = () => {
+      const urlState = loadGameStateFromUrl();
+      if (!urlState) {
+        return;
+      }
+
+      setPlayers(urlState.players);
+      setSettings(urlState.settings);
+    };
+
+    window.addEventListener('hashchange', syncStateFromUrl);
+    window.addEventListener('popstate', syncStateFromUrl);
+
+    return () => {
+      window.removeEventListener('hashchange', syncStateFromUrl);
+      window.removeEventListener('popstate', syncStateFromUrl);
+    };
+  }, []);
 
   const openBuyInModal = (playerId) => {
     setAmountDialog({ isOpen: true, mode: 'buy-in', playerId });
