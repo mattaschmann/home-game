@@ -47,35 +47,29 @@ export default function PlayerCard({
 
   return (
     <article className="player-row">
-      <div className="row-primary">
-        <div className="player-identity">
-          <span className="player-name">{player.name}</span>
-          <span className="buyin-chip">{buyInCount}</span>
-        </div>
-
-        <div className="player-metrics">
-          <div className="metric">
-            <span className="metric-value">{formatCurrency(totalInvested)}</span>
-          </div>
-        </div>
+      <div className="player-identity">
+        <span className="player-name">{player.name}</span>
+        <span className="buyin-chip">{buyInCount}</span>
       </div>
 
-      <div className="row-secondary">
-        <div className="player-actions">
-          <IconButton label={`Add buy-in for ${player.name}`} onClick={() => onRequestBuyIn(player.id)}>
-            <PlusIcon />
-          </IconButton>
-          <IconButton
-            label={`Undo last buy-in for ${player.name}`}
-            onClick={() => onUndoBuyIn(player.id)}
-            disabled={player.buyIns.length === 0}
-          >
-            <UndoIcon />
-          </IconButton>
-          <IconButton label={`Remove ${player.name}`} onClick={() => onRemovePlayer(player.id)}>
-            <TrashIcon />
-          </IconButton>
-        </div>
+      <div className="player-metrics">
+        <span className="metric-value">{formatCurrency(totalInvested)}</span>
+      </div>
+
+      <div className="player-actions">
+        <IconButton label={`Add buy-in for ${player.name}`} onClick={() => onRequestBuyIn(player.id)}>
+          <PlusIcon />
+        </IconButton>
+        <IconButton
+          label={`Undo last buy-in for ${player.name}`}
+          onClick={() => onUndoBuyIn(player.id)}
+          disabled={player.buyIns.length === 0}
+        >
+          <UndoIcon />
+        </IconButton>
+        <IconButton label={`Remove ${player.name}`} onClick={() => onRemovePlayer(player.id)}>
+          <TrashIcon />
+        </IconButton>
       </div>
     </article>
   );

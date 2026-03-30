@@ -82,6 +82,13 @@
   gap: var(--spacing-sm);
 }
 
+.standings.is-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .standing-row {
   display: contents;
   align-items: center;

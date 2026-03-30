@@ -1,21 +1,15 @@
 .player-row {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(72px, auto) max-content;
+  align-items: center;
   padding: var(--spacing-sm) 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  gap: var(--spacing-sm);
+  column-gap: var(--spacing-sm);
+  row-gap: var(--spacing-xs);
 }
 
 .player-row:last-child {
   border-bottom: none;
-}
-
-.row-primary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-  justify-content: space-between;
-  align-items: center;
 }
 
 .player-identity {
@@ -39,42 +33,25 @@
 }
 
 .player-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-  flex: 1;
-  justify-content: flex-end;
-}
-
-.metric {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.95rem;
-  color: var(--text-secondary);
-}
-
-.metric-value {
+  justify-self: end;
   font-weight: 600;
   color: var(--text-primary);
-}
-
-.row-secondary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--spacing-sm);
+  font-size: 1rem;
+  min-width: 72px;
+  text-align: right;
 }
 
 .player-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-auto-flow: column;
+  gap: 0.35rem;
+  justify-self: end;
+  white-space: nowrap;
 }
 
 .icon-button {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: transparent;
@@ -99,22 +76,11 @@
 }
 
 .icon-button svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   stroke: currentColor;
   fill: none;
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-@media (max-width: 540px) {
-  .row-secondary {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .player-metrics {
-    justify-content: flex-start;
-  }
 }

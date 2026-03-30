@@ -73,7 +73,9 @@ export default function Settlement({ players, onRequestStackEntry }) {
         </div>
       </div>
 
-      <div className="standings">
+      <div
+        className={`standings ${summary.standings.length === 0 ? 'is-empty' : ''}`}
+      >
         {summary.standings.length === 0 ? (
           <p className="empty-state">Add players to enter and settle stacks.</p>
         ) : (
