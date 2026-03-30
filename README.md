@@ -1,4 +1,6 @@
-# Home Game
+
+
+# <img src="./public/favicon.svg" alt="7 and 2 poker icon" width="30" height="30" /> Home Game
 
 [![Live Demo](https://img.shields.io/badge/demo-github_pages-2ea44f?logo=github)](https://mattaschmann.github.io/home-game/)
 ![React](https://img.shields.io/badge/react-19-61dafb?logo=react&logoColor=white)
@@ -7,7 +9,8 @@
 
 ![App screenshot](./assets/screenshot.png)
 
-`home-game` is a small React + Vite app for tracking a home poker game.
+
+ `home-game` is a small React + Vite app for tracking a home poker game.
 
 It helps you:
 
