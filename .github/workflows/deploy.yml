@@ -1,30 +1,78 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
-    branches: [main]
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  build-and-deploy:
+  build:
+    if: github.event.release.draft == false && github.event.release.prerelease == false
     runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.latest.outputs.deploy }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: true
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check latest stable release
+        id: latest
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const latest = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const deploy = latest.data.tag_name === context.payload.release.tag_name;
+            core.setOutput('deploy', String(deploy));
+
+            if (!deploy) {
+              core.info(`Skipping deploy for ${context.payload.release.tag_name} because latest stable release is ${latest.data.tag_name}.`);
+            }
+
+      - uses: actions/checkout@v4
+        if: steps.latest.outputs.deploy == 'true'
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: actions/configure-pages@v5
+        if: steps.latest.outputs.deploy == 'true'
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        if: steps.latest.outputs.deploy == 'true'
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "22"
 
       - name: Install dependencies
+        if: steps.latest.outputs.deploy == 'true'
         run: npm ci
 
       - name: Build
+        if: steps.latest.outputs.deploy == 'true'
         run: npm run build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload Pages artifact
+        if: steps.latest.outputs.deploy == 'true'
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          path: ./dist
 
+  deploy:
+    needs: build
+    if: needs.build.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
