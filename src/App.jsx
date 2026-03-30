@@ -216,20 +216,11 @@ function App() {
   };
 
   const handleRemovePlayer = (playerId) => {
-    const targetPlayer = players.find((player) => player.id === playerId);
-    const hasData =
-      (targetPlayer?.buyIns.length ?? 0) > 0 ||
-      parseCurrencyInput(targetPlayer?.finalStack ?? '') > 0;
-
-    if (hasData) {
-      setConfirmState({
-        isOpen: true,
-        action: 'remove-player',
-        payload: { playerId }
-      });
-    } else {
-      setPlayers((prev) => prev.filter((player) => player.id !== playerId));
-    }
+    setConfirmState({
+      isOpen: true,
+      action: 'remove-player',
+      payload: { playerId }
+    });
   };
 
   const handleResetValues = () => {
@@ -252,9 +243,14 @@ function App() {
     switch (confirmState.action) {
       case 'remove-player': {
         const player = players.find((p) => p.id === confirmState.payload?.playerId);
+        const hasData =
+          (player?.buyIns.length ?? 0) > 0 || parseCurrencyInput(player?.finalStack ?? '') > 0;
+
         return {
           title: `Remove ${player?.name ?? 'player'}?`,
-          message: 'This will delete all buy-ins and stack data for this player.',
+          message: hasData
+            ? 'This will delete all buy-ins and stack data for this player.'
+            : 'This will remove this player from the game.',
           confirmText: 'Remove Player'
         };
       }

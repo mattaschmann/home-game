@@ -1,5 +1,9 @@
 # Home Game
 
+## Live Demo
+
+- [Open the app on GitHub Pages](https://mattaschmann.github.io/home-game/)
+
 `home-game` is a small React + Vite app for tracking a home poker game.
 
 It helps you:
