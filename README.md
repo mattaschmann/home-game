@@ -1,16 +1,37 @@
-# React + Vite
+# Home Game
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+`home-game` is a small React + Vite app for tracking a home poker game.
 
-Currently, two official plugins are available:
+It helps you:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- add players at the table
+- log buy-ins for each player
+- record final stacks at the end of the game
+- see who is up or down in the settlement view
+- reset values or remove players when the table changes
 
-## React Compiler
+## How it works
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Player data is saved in the browser so your table state persists between refreshes.
+- You can add a player from scratch or reuse names from past games.
+- Buy-ins and final stacks use dollar amounts and the app calculates totals automatically.
+- The settlement section compares total buy-ins against total stacks to show whether the game is balanced.
 
-## Expanding the ESLint configuration
+## Tech stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- React 19
+- Vite
+- `gh-pages` for deployment
+
+## Scripts
+
+- `npm run dev` - start the local dev server
+- `npm run dev-lan` - start the dev server on your local network
+- `npm run build` - create a production build
+- `npm run lint` - run ESLint
+- `npm run preview` - preview the production build locally
+- `npm run deploy` - build and publish to GitHub Pages
+
+## License
+
+MIT
