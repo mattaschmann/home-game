@@ -1,8 +1,11 @@
 # Home Game
 
-## Live Demo
+[![Live Demo](https://img.shields.io/badge/demo-github_pages-2ea44f?logo=github)](https://mattaschmann.github.io/home-game/)
+![React](https://img.shields.io/badge/react-19-61dafb?logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/vite-latest-646cff?logo=vite&logoColor=white)
+![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)
 
-- [Open the app on GitHub Pages](https://mattaschmann.github.io/home-game/)
+![App screenshot](./assets/screenshot.png)
 
 `home-game` is a small React + Vite app for tracking a home poker game.
 
@@ -13,6 +16,10 @@ It helps you:
 - record final stacks at the end of the game
 - see who is up or down in the settlement view
 - reset values or remove players when the table changes
+
+## Live Demo
+
+- [Open the app on GitHub Pages](https://mattaschmann.github.io/home-game/)
 
 ## How it works
 
