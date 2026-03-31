@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import './App.css';
 import AddPlayer from './components/AddPlayer/AddPlayer';
@@ -6,13 +6,42 @@ import PlayerCard from './components/PlayerCard/PlayerCard';
 import Settlement from './components/Settlement/Settlement';
 import BuyInModal from './components/BuyInModal/BuyInModal';
 import ConfirmDialog from './components/ConfirmDialog/ConfirmDialog';
+import GameSettingsModal from './components/GameSettingsModal/GameSettingsModal';
 import {
   loadGameState,
-  loadGameStateFromUrl,
   saveGameState,
-  addPlayerNameToHistory
+  addPlayerNameToHistory,
+  loadFirebaseConfigDraft,
+  saveFirebaseConfigDraft,
+  loadFirebaseSessionIdDraft,
+  saveFirebaseSessionIdDraft,
+  clearBitlyAccessToken,
+  loadBitlyAccessToken,
+  loadBitlyDomain,
+  loadBitlyGroupGuid,
+  loadBitlyLinkCache,
+  saveBitlyAccessToken,
+  saveBitlyDomain,
+  saveBitlyGroupGuid,
+  saveBitlyLinkCache
 } from './utils/storage';
 import { parseCurrencyInput, formatCurrency } from './utils/calculations';
+import {
+  clearFirebaseCollaborationFromHash,
+  parseFirebaseCollaborationFromHash,
+  sanitizeCollaborationHash,
+  writeFirebaseCollaborationToHash
+} from './utils/firebaseCollaborationUrl';
+import {
+  loadFirebaseSharedShortLink,
+  saveFirebaseSharedShortLink,
+  subscribeToFirebaseSession,
+  writeFirebaseSessionState
+} from './utils/firebaseSync';
+import {
+  createBitlyShortLink,
+  resolveDefaultBitlyGroupAndDomain
+} from './utils/bitlyLinks';
 
 const initialGameState = loadGameState();
 
@@ -74,6 +103,13 @@ const SettingsSliderIcon = () => (
   </svg>
 );
 
+const ShareIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M13 4l7 7-7 7" />
+    <path d="M20 11H8a5 5 0 00-5 5v1" />
+  </svg>
+);
+
 const GitHubIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path
@@ -89,34 +125,160 @@ function App() {
   const [amountDialog, setAmountDialog] = useState({ isOpen: false, mode: null, playerId: null });
   const [confirmState, setConfirmState] = useState({ isOpen: false, action: null, payload: null });
   const [isAddPlayerDialogOpen, setAddPlayerDialogOpen] = useState(false);
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [firebaseConfigDraft, setFirebaseConfigDraft] = useState(() => loadFirebaseConfigDraft());
+  const [firebaseSessionIdDraft, setFirebaseSessionIdDraft] = useState(() => loadFirebaseSessionIdDraft());
+  const [bitlyAccessToken, setBitlyAccessToken] = useState(() => loadBitlyAccessToken());
+  const [bitlyAccessTokenDraft, setBitlyAccessTokenDraft] = useState(() => loadBitlyAccessToken());
+  const [bitlyGroupGuid, setBitlyGroupGuid] = useState(() => loadBitlyGroupGuid());
+  const [bitlyDomain, setBitlyDomain] = useState(() => loadBitlyDomain());
+  const [bitlyLinkCache, setBitlyLinkCache] = useState(() => loadBitlyLinkCache());
+  const [bitlyError, setBitlyError] = useState('');
+  const [shareFeedback, setShareFeedback] = useState('');
+  const [isSharing, setIsSharing] = useState(false);
+  const [collaborationSession, setCollaborationSession] = useState(() => parseFirebaseCollaborationFromHash());
+  const [isFirebaseReady, setFirebaseReady] = useState(false);
+  const [collaborationError, setCollaborationError] = useState('');
+  const lastRemoteStateRef = useRef(null);
 
   useEffect(() => {
     saveGameState({ players, settings });
   }, [players, settings]);
 
   useEffect(() => {
+    saveFirebaseConfigDraft(firebaseConfigDraft);
+  }, [firebaseConfigDraft]);
+
+  useEffect(() => {
+    saveFirebaseSessionIdDraft(firebaseSessionIdDraft);
+  }, [firebaseSessionIdDraft]);
+
+  useEffect(() => {
+    saveBitlyAccessToken(bitlyAccessToken);
+  }, [bitlyAccessToken]);
+
+  useEffect(() => {
+    saveBitlyGroupGuid(bitlyGroupGuid);
+  }, [bitlyGroupGuid]);
+
+  useEffect(() => {
+    saveBitlyDomain(bitlyDomain);
+  }, [bitlyDomain]);
+
+  useEffect(() => {
+    saveBitlyLinkCache(bitlyLinkCache);
+  }, [bitlyLinkCache]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') {
       return undefined;
     }
 
-    const syncStateFromUrl = () => {
-      const urlState = loadGameStateFromUrl();
-      if (!urlState) {
-        return;
-      }
-
-      setPlayers(urlState.players);
-      setSettings(urlState.settings);
+    const syncCollaborationModeFromUrl = () => {
+      sanitizeCollaborationHash();
+      const parsed = parseFirebaseCollaborationFromHash();
+      setCollaborationSession(parsed);
+      setCollaborationError('');
+      setFirebaseReady(false);
+      lastRemoteStateRef.current = null;
     };
 
-    window.addEventListener('hashchange', syncStateFromUrl);
-    window.addEventListener('popstate', syncStateFromUrl);
+    syncCollaborationModeFromUrl();
+
+    window.addEventListener('hashchange', syncCollaborationModeFromUrl);
+    window.addEventListener('popstate', syncCollaborationModeFromUrl);
 
     return () => {
-      window.removeEventListener('hashchange', syncStateFromUrl);
-      window.removeEventListener('popstate', syncStateFromUrl);
+      window.removeEventListener('hashchange', syncCollaborationModeFromUrl);
+      window.removeEventListener('popstate', syncCollaborationModeFromUrl);
     };
   }, []);
+
+  useEffect(() => {
+    if (!collaborationSession) {
+      return undefined;
+    }
+
+    let isActive = true;
+    let unsubscribe = () => {};
+
+    subscribeToFirebaseSession({
+      firebaseConfig: collaborationSession.firebaseConfig,
+      sessionId: collaborationSession.sessionId,
+      onState: (remoteState) => {
+        if (!isActive) {
+          return;
+        }
+
+        if (!remoteState) {
+          setFirebaseReady(true);
+          return;
+        }
+
+        const serialized = JSON.stringify(remoteState);
+        lastRemoteStateRef.current = serialized;
+        setPlayers(remoteState.players);
+        setSettings(remoteState.settings);
+        setFirebaseReady(true);
+      },
+      onError: (error) => {
+        if (!isActive) {
+          return;
+        }
+
+        console.error('Firebase session subscription error:', error);
+        setCollaborationError(error?.message ?? 'Unable to subscribe to Firebase session.');
+        setFirebaseReady(true);
+      }
+    })
+      .then((resolvedUnsubscribe) => {
+        if (!isActive) {
+          resolvedUnsubscribe();
+          return;
+        }
+
+        unsubscribe = resolvedUnsubscribe;
+      })
+      .catch((error) => {
+        if (!isActive) {
+          return;
+        }
+
+        console.error('Firebase session initialization error:', error);
+        setCollaborationError(error?.message ?? 'Unable to initialize Firebase collaboration.');
+        setFirebaseReady(true);
+      });
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [collaborationSession]);
+
+  useEffect(() => {
+    if (!collaborationSession || !isFirebaseReady) {
+      return;
+    }
+
+    const nextState = { players, settings };
+    const serializedState = JSON.stringify(nextState);
+    if (serializedState === lastRemoteStateRef.current) {
+      return;
+    }
+
+    writeFirebaseSessionState({
+      firebaseConfig: collaborationSession.firebaseConfig,
+      sessionId: collaborationSession.sessionId,
+      state: nextState
+    })
+      .then(() => {
+        lastRemoteStateRef.current = serializedState;
+      })
+      .catch((error) => {
+        console.error('Firebase session write error:', error);
+        setCollaborationError(error?.message ?? 'Unable to sync state to Firebase session.');
+      });
+  }, [players, settings, collaborationSession, isFirebaseReady]);
 
   const openBuyInModal = (playerId) => {
     setAmountDialog({ isOpen: true, mode: 'buy-in', playerId });
@@ -127,7 +289,11 @@ function App() {
   };
 
   const openDefaultBuyInModal = () => {
-    setAmountDialog({ isOpen: true, mode: 'settings', playerId: null });
+    setSettingsOpen(true);
+  };
+
+  const closeSettingsModal = () => {
+    setSettingsOpen(false);
   };
 
   const closeAmountDialog = () => {
@@ -188,10 +354,6 @@ function App() {
               : player
           )
         );
-        break;
-      }
-      case 'settings': {
-        setSettings((prev) => ({ ...prev, defaultBuyIn: amount }));
         break;
       }
       default:
@@ -342,27 +504,277 @@ function App() {
           secondaryActionLabel: hasExisting ? 'Clear Stack' : null
         };
       }
-      case 'settings': {
-        const defaultAmount = settings.defaultBuyIn ?? 0;
-        return {
-          title: 'Set Table Default',
-          description: 'This amount pre-fills every buy-in at the table.',
-          defaultAmount,
-          confirmLabel: 'Set',
-          confirmTextBuilder: (value) => `Set ${formatCurrency(value)}`,
-          allowZero: true
-        };
-      }
       default:
         return null;
     }
   }, [amountDialog, activePlayer, settings]);
+
+  const getCanonicalShareUrl = () => {
+    if (typeof window === 'undefined') {
+      return '';
+    }
+
+    const url = new URL(window.location.href);
+    ['code', 'state', 'error', 'error_description'].forEach((key) => {
+      url.searchParams.delete(key);
+    });
+    return url.toString();
+  };
+
+  const getBitlyEligibilityReason = (longUrl) => {
+    try {
+      const parsed = new URL(longUrl);
+      const isHttp = parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      if (!isHttp) {
+        return 'Bitly only supports http/https URLs. Full URL will be shared.';
+      }
+
+      const hostname = parsed.hostname.toLowerCase();
+      if (hostname === 'localhost' || hostname.endsWith('.local')) {
+        return 'Bitly does not shorten localhost/private URLs. Full URL will be shared.';
+      }
+
+      if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+        return 'Bitly may reject IP-based URLs. Full URL will be shared.';
+      }
+
+      if (longUrl.length > 2000) {
+        return 'URL is likely too long for Bitly. Full URL will be shared.';
+      }
+
+      return '';
+    } catch {
+      return 'URL is invalid. Full URL will be shared.';
+    }
+  };
+
+  const ensureBitlyDefaults = async (accessToken) => {
+    if (bitlyGroupGuid && bitlyDomain) {
+      return {
+        groupGuid: bitlyGroupGuid,
+        domain: bitlyDomain
+      };
+    }
+
+    const defaults = await resolveDefaultBitlyGroupAndDomain({ accessToken });
+    setBitlyGroupGuid(defaults.groupGuid);
+    setBitlyDomain(defaults.domain);
+    return defaults;
+  };
+
+  const resolveShareUrl = async (longUrl) => {
+    if (collaborationSession) {
+      try {
+        const firebaseShortLink = await loadFirebaseSharedShortLink({
+          firebaseConfig: collaborationSession.firebaseConfig,
+          sessionId: collaborationSession.sessionId,
+          longUrl
+        });
+
+        if (firebaseShortLink) {
+          return firebaseShortLink;
+        }
+      } catch (error) {
+        console.error('Unable to read shared short link from Firebase:', error);
+      }
+    }
+
+    const localShortLink = bitlyLinkCache[longUrl];
+    if (typeof localShortLink === 'string' && localShortLink) {
+      return localShortLink;
+    }
+
+    if (!bitlyAccessToken.trim()) {
+      return longUrl;
+    }
+
+    const bitlyEligibilityReason = getBitlyEligibilityReason(longUrl);
+    if (bitlyEligibilityReason) {
+      setBitlyError(bitlyEligibilityReason);
+      return longUrl;
+    }
+
+    try {
+      const defaults = await ensureBitlyDefaults(bitlyAccessToken);
+      const shortUrl = await createBitlyShortLink({
+        accessToken: bitlyAccessToken,
+        longUrl,
+        groupGuid: defaults.groupGuid,
+        domain: defaults.domain
+      });
+
+      setBitlyLinkCache((prev) => ({
+        ...prev,
+        [longUrl]: shortUrl
+      }));
+      setBitlyError('');
+
+      if (collaborationSession) {
+        try {
+          await saveFirebaseSharedShortLink({
+            firebaseConfig: collaborationSession.firebaseConfig,
+            sessionId: collaborationSession.sessionId,
+            longUrl,
+            shortUrl,
+            provider: 'bitly'
+          });
+        } catch (error) {
+          console.error('Unable to persist shared short link to Firebase:', error);
+        }
+      }
+
+      return shortUrl;
+    } catch (error) {
+      console.error('Unable to create Bitly short link:', error);
+      const message = String(error?.message ?? '');
+      if (message.includes('INVALID_ARG_LONG_URL')) {
+        setBitlyError('Bitly rejected this URL as invalid (often local/private or too long). Sharing full URL instead.');
+      } else {
+        setBitlyError(error?.message ?? 'Unable to shorten URL with Bitly right now.');
+      }
+      return longUrl;
+    }
+  };
+
+  const handleShare = async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const longUrl = getCanonicalShareUrl();
+    if (!longUrl) {
+      return;
+    }
+
+    setIsSharing(true);
+    setShareFeedback('');
+
+    try {
+      const shareUrl = await resolveShareUrl(longUrl);
+
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Home Game',
+          text: 'Join my Home Game session',
+          url: shareUrl
+        });
+        return;
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        setShareFeedback('Share link copied to clipboard.');
+        return;
+      }
+
+      setShareFeedback('Sharing is not supported in this browser.');
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        return;
+      }
+
+      console.error('Share action failed:', error);
+      setShareFeedback('Unable to open share dialog.');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleSaveBitlySettings = async () => {
+    const trimmedToken = bitlyAccessTokenDraft.trim();
+    setBitlyAccessToken(trimmedToken);
+    setBitlyLinkCache({});
+
+    if (!trimmedToken) {
+      setBitlyGroupGuid('');
+      setBitlyDomain('bit.ly');
+      setBitlyError('');
+      return;
+    }
+
+    try {
+      const defaults = await resolveDefaultBitlyGroupAndDomain({ accessToken: trimmedToken });
+      setBitlyGroupGuid(defaults.groupGuid);
+      setBitlyDomain(defaults.domain);
+      setBitlyError('');
+    } catch (error) {
+      console.error('Unable to validate Bitly access token:', error);
+      setBitlyError(error?.message ?? 'Unable to validate Bitly access token.');
+    }
+  };
+
+  const handleClearBitlySettings = () => {
+    setBitlyAccessToken('');
+    setBitlyAccessTokenDraft('');
+    setBitlyGroupGuid('');
+    setBitlyDomain('bit.ly');
+    setBitlyLinkCache({});
+    setBitlyError('');
+    clearBitlyAccessToken();
+  };
+
+  const bitlyEligibilityReason = getBitlyEligibilityReason(getCanonicalShareUrl());
+
+  const handleStartCollaboration = () => {
+    const sessionId = firebaseSessionIdDraft.trim();
+    if (!sessionId) {
+      setCollaborationError('Session id is required.');
+      return;
+    }
+
+    const trimmedConfigDraft = firebaseConfigDraft.trim();
+    let parsedConfig = collaborationSession?.firebaseConfig ?? null;
+
+    if (trimmedConfigDraft) {
+      try {
+        parsedConfig = JSON.parse(trimmedConfigDraft);
+      } catch {
+        setCollaborationError('Firebase config must be valid JSON.');
+        return;
+      }
+    }
+
+    if (!parsedConfig) {
+      setCollaborationError('Firebase config is required.');
+      return;
+    }
+
+    const didWrite = writeFirebaseCollaborationToHash({
+      firebaseConfig: parsedConfig,
+      sessionId
+    });
+
+    if (!didWrite) {
+      setCollaborationError('Unable to write Firebase collaboration metadata to URL.');
+      return;
+    }
+
+    const parsedSession = parseFirebaseCollaborationFromHash();
+    setFirebaseReady(false);
+    setCollaborationSession(parsedSession);
+    setFirebaseConfigDraft('');
+    setCollaborationError('');
+    lastRemoteStateRef.current = null;
+  };
+
+  const handleLeaveCollaboration = () => {
+    clearFirebaseCollaborationFromHash();
+    setCollaborationSession(null);
+    setFirebaseReady(false);
+    setCollaborationError('');
+    lastRemoteStateRef.current = null;
+  };
+
+  const collaborationMode = collaborationSession ? 'firebase' : 'local';
 
   return (
     <div className="app container">
       <header className="app-header">
         <div>
           <p className="eyebrow">Home Game</p>
+          <p className={`mode-badge ${collaborationMode === 'firebase' ? 'firebase' : ''}`}>
+            {collaborationMode === 'firebase' ? 'Firebase Shared Session' : 'Local Session'}
+          </p>
         </div>
       </header>
 
@@ -392,7 +804,16 @@ function App() {
           onClick={openDefaultBuyInModal}
           variant="secondary"
         />
+        <ActionIconButton
+          label={isSharing ? 'Sharing...' : 'Share Link'}
+          icon={ShareIcon}
+          onClick={handleShare}
+          disabled={isSharing}
+          variant="secondary"
+        />
       </div>
+
+      {shareFeedback && <p className="app-share-feedback">{shareFeedback}</p>}
 
       {players.length === 0 ? (
         <div className="empty-state">
@@ -446,6 +867,30 @@ function App() {
           onCancel={closeAmountDialog}
         />
       )}
+
+      <GameSettingsModal
+        isOpen={isSettingsOpen}
+        defaultBuyIn={settings.defaultBuyIn ?? 0}
+        firebaseConfigDraft={firebaseConfigDraft}
+        firebaseSessionIdDraft={firebaseSessionIdDraft}
+        bitlyAccessTokenDraft={bitlyAccessTokenDraft}
+        bitlyConnected={Boolean(bitlyAccessToken.trim())}
+        bitlyError={bitlyError}
+        bitlyEligibilityReason={bitlyEligibilityReason}
+        collaborationMode={collaborationMode}
+        collaborationError={collaborationError}
+        onClose={closeSettingsModal}
+        onSaveDefaultBuyIn={(defaultBuyIn) => {
+          setSettings((prev) => ({ ...prev, defaultBuyIn }));
+        }}
+        onFirebaseConfigDraftChange={setFirebaseConfigDraft}
+        onFirebaseSessionIdDraftChange={setFirebaseSessionIdDraft}
+        onBitlyAccessTokenDraftChange={setBitlyAccessTokenDraft}
+        onSaveBitlySettings={handleSaveBitlySettings}
+        onClearBitlySettings={handleClearBitlySettings}
+        onStartCollaboration={handleStartCollaboration}
+        onLeaveCollaboration={handleLeaveCollaboration}
+      />
 
       <AddPlayer
         isOpen={isAddPlayerDialogOpen}
