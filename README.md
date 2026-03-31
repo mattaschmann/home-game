@@ -50,11 +50,16 @@ This app supports a bring-your-own Firebase setup. No Firebase credentials are h
    - Go to Authentication > Sign-in method
    - Enable **Anonymous** provider
 
-4. Create Firestore database
+4. Add your app domain to Firebase Auth authorized domains
+   - Go to Authentication > Settings > Authorized domains
+   - Add your deployed app host (for GitHub Pages, this is usually `username.github.io`)
+   - Keep `authDomain` from Firebase config as-is (typically `your-project.firebaseapp.com`)
+
+5. Create Firestore database
    - Go to Firestore Database and create a database
    - Start in production or test mode (production recommended)
 
-5. Set Firestore security rules baseline
+6. Set Firestore security rules baseline
 
 ```javascript
 rules_version = '2';
@@ -67,7 +72,7 @@ service cloud.firestore {
 }
 ```
 
-6. Start collaboration in the app
+7. Start collaboration in the app
    - Open **Game Settings**
    - Paste Firebase config JSON
    - Enter a session id (for example: `friday-night-game`)
