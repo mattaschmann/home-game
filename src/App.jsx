@@ -470,11 +470,20 @@ function App() {
       return;
     }
 
-    let parsedConfig;
-    try {
-      parsedConfig = JSON.parse(firebaseConfigDraft);
-    } catch {
-      setCollaborationError('Firebase config must be valid JSON.');
+    const trimmedConfigDraft = firebaseConfigDraft.trim();
+    let parsedConfig = collaborationSession?.firebaseConfig ?? null;
+
+    if (trimmedConfigDraft) {
+      try {
+        parsedConfig = JSON.parse(trimmedConfigDraft);
+      } catch {
+        setCollaborationError('Firebase config must be valid JSON.');
+        return;
+      }
+    }
+
+    if (!parsedConfig) {
+      setCollaborationError('Firebase config is required.');
       return;
     }
 
@@ -491,6 +500,7 @@ function App() {
     const parsedSession = parseFirebaseCollaborationFromHash();
     setFirebaseReady(false);
     setCollaborationSession(parsedSession);
+    setFirebaseConfigDraft('');
     setCollaborationError('');
     lastRemoteStateRef.current = null;
   };

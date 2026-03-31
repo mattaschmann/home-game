@@ -91,6 +91,9 @@ export default function GameSettingsModal({
           <p className="settings-help">
             Paste your Firebase web app config JSON and choose a session id to share this game.
           </p>
+          {collaborationMode === 'firebase' && firebaseConfigDraft.trim() === '' && (
+            <p className="settings-help">Firebase config is set and hidden. Paste a new config only if you want to replace it.</p>
+          )}
           <p className={`settings-mode ${collaborationMode === 'firebase' ? 'active' : ''}`}>
             Mode: {collaborationMode === 'firebase' ? 'Firebase (shared)' : 'Local only'}
           </p>
@@ -103,7 +106,11 @@ export default function GameSettingsModal({
             rows={6}
             value={firebaseConfigDraft}
             onChange={(event) => onFirebaseConfigDraftChange(event.target.value)}
-            placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'
+            placeholder={
+              collaborationMode === 'firebase' && firebaseConfigDraft.trim() === ''
+                ? 'Firebase config is hidden for the active collaboration session. Paste new JSON to replace it.'
+                : '{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'
+            }
           />
           <label className="settings-label" htmlFor="firebase-session-id">
             Session id
