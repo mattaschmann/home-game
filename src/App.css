@@ -250,6 +250,39 @@
   height: 20px;
 }
 
+@media (max-width: 480px) {
+  .app-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--spacing-xs);
+  }
+
+  .app-action-button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: var(--spacing-xs) 2px;
+  }
+
+  .app-action-ring {
+    width: 36px;
+    height: 36px;
+  }
+
+  .app-action-ring svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .app-action-text {
+    font-size: 0.6rem;
+  }
+
+  .app-session-name-button,
+  .app-session-name-input {
+    font-size: 1.35rem;
+  }
+}
+
 @media (min-width: 768px) {
   .app-header {
     flex-direction: row;

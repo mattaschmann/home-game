@@ -694,7 +694,7 @@ function App() {
 
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareUrl);
-        setShareFeedback('Share link copied to clipboard.');
+        setShareFeedback(bitlyError || 'Share link copied to clipboard.');
         return;
       }
 
@@ -884,7 +884,7 @@ function App() {
           variant="secondary"
         />
         <ActionIconButton
-          label={isSharing ? 'Sharing...' : 'Share Link'}
+          label={isSharing ? 'Sharing...' : ((bitlyAccessToken.trim() || collaborationSession) ? 'Bitly Link' : 'Share Link')}
           icon={ShareIcon}
           onClick={handleShare}
           disabled={isSharing}
