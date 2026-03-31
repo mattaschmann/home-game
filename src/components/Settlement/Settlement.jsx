@@ -31,8 +31,7 @@ export default function Settlement({ players, onRequestStackEntry }) {
           net,
           display: formatNetAmount(net)
         };
-      })
-      .sort((a, b) => b.net - a.net);
+      });
 
     return {
       totalInvested,
