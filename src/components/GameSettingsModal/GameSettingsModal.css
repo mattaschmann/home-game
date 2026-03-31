@@ -1,0 +1,137 @@
+.settings-modal {
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  width: min(720px, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+  display: grid;
+  gap: var(--spacing-md);
+  box-shadow: 0 4px 20px var(--shadow);
+  animation: slideIn 0.2s ease;
+}
+
+.settings-section {
+  display: grid;
+  gap: var(--spacing-xs);
+}
+
+.settings-section h3 {
+  font-size: 1.1rem;
+}
+
+.settings-help {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.settings-mode {
+  margin-top: 0.2rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.settings-mode.active {
+  color: var(--accent);
+}
+
+.settings-buyin-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: 0.35rem;
+}
+
+.settings-currency {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+}
+
+.settings-buyin-input,
+.settings-text-input,
+.settings-textarea {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  padding: 0.6rem 0.75rem;
+}
+
+.settings-buyin-input {
+  width: 150px;
+  text-align: right;
+}
+
+.settings-label {
+  margin-top: 0.45rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.settings-textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.settings-text-input {
+  width: 100%;
+}
+
+.settings-textarea:focus,
+.settings-text-input:focus,
+.settings-buyin-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.settings-actions-row,
+.settings-footer {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.settings-footer {
+  justify-content: flex-end;
+}
+
+.settings-button {
+  border-radius: var(--border-radius);
+  padding: 0.55rem 0.9rem;
+  min-height: 40px;
+}
+
+.settings-button.primary {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.settings-button.ghost {
+  border: 1px dashed var(--border);
+}
+
+.settings-button.cancel {
+  background: var(--bg-secondary);
+}
+
+.settings-error {
+  color: var(--loss);
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .settings-modal {
+    padding: var(--spacing-sm);
+  }
+
+  .settings-buyin-row {
+    flex-wrap: wrap;
+  }
+
+  .settings-buyin-input {
+    width: 100%;
+    text-align: left;
+  }
+}

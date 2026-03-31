@@ -1,14 +1,15 @@
 import {
   getEncodedStateFromHash,
   decodeGameState,
-  encodeGameState,
-  writeEncodedStateToHash
+  clearEncodedStateFromHash
 } from './urlState';
 
 const STORAGE_KEYS = {
   PLAYERS: 'poker-players',
   PLAYER_NAMES: 'poker-player-names',
-  SETTINGS: 'poker-settings'
+  SETTINGS: 'poker-settings',
+  FIREBASE_CONFIG_DRAFT: 'poker-firebase-config-draft',
+  FIREBASE_SESSION_ID_DRAFT: 'poker-firebase-session-id-draft'
 };
 
 const DEFAULT_SETTINGS = {
@@ -172,24 +173,61 @@ export const loadGameStateFromUrl = () => {
 };
 
 export const loadGameState = () => {
-  const urlState = loadGameStateFromUrl();
-  if (urlState) {
-    return normalizeGameState(urlState);
-  }
-
-  const legacyState = {
+  const localState = normalizeGameState({
     players: loadPlayers(),
     settings: loadSettings()
-  };
-  return normalizeGameState(legacyState);
+  });
+
+  const hasLocalPlayers = localState.players.length > 0;
+  const hasCustomLocalSettings =
+    localState.settings.defaultBuyIn !== DEFAULT_SETTINGS.defaultBuyIn;
+
+  if (hasLocalPlayers || hasCustomLocalSettings) {
+    clearEncodedStateFromHash();
+    return localState;
+  }
+
+  const legacyUrlState = loadGameStateFromUrl();
+  if (legacyUrlState) {
+    const normalizedLegacyState = normalizeGameState(legacyUrlState);
+    savePlayers(normalizedLegacyState.players);
+    saveSettings(normalizedLegacyState.settings);
+    clearEncodedStateFromHash();
+    return normalizedLegacyState;
+  }
+
+  return localState;
 };
 
 export const saveGameState = (state) => {
   const normalizedState = normalizeGameState(state);
-  const encodedState = encodeGameState(normalizedState);
-  if (!encodedState) {
-    return false;
+  savePlayers(normalizedState.players);
+  saveSettings(normalizedState.settings);
+  return true;
+};
+
+export const loadFirebaseConfigDraft = () => {
+  const draft = loadFromStorage(STORAGE_KEYS.FIREBASE_CONFIG_DRAFT, '');
+  return typeof draft === 'string' ? draft : '';
+};
+
+export const saveFirebaseConfigDraft = (draft) => {
+  if (typeof draft !== 'string') {
+    return;
   }
 
-  return writeEncodedStateToHash(encodedState);
+  saveToStorage(STORAGE_KEYS.FIREBASE_CONFIG_DRAFT, draft);
+};
+
+export const loadFirebaseSessionIdDraft = () => {
+  const sessionId = loadFromStorage(STORAGE_KEYS.FIREBASE_SESSION_ID_DRAFT, '');
+  return typeof sessionId === 'string' ? sessionId : '';
+};
+
+export const saveFirebaseSessionIdDraft = (sessionId) => {
+  if (typeof sessionId !== 'string') {
+    return;
+  }
+
+  saveToStorage(STORAGE_KEYS.FIREBASE_SESSION_ID_DRAFT, sessionId.trim());
 };

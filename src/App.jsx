@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import './App.css';
 import AddPlayer from './components/AddPlayer/AddPlayer';
@@ -6,13 +6,27 @@ import PlayerCard from './components/PlayerCard/PlayerCard';
 import Settlement from './components/Settlement/Settlement';
 import BuyInModal from './components/BuyInModal/BuyInModal';
 import ConfirmDialog from './components/ConfirmDialog/ConfirmDialog';
+import GameSettingsModal from './components/GameSettingsModal/GameSettingsModal';
 import {
   loadGameState,
-  loadGameStateFromUrl,
   saveGameState,
-  addPlayerNameToHistory
+  addPlayerNameToHistory,
+  loadFirebaseConfigDraft,
+  saveFirebaseConfigDraft,
+  loadFirebaseSessionIdDraft,
+  saveFirebaseSessionIdDraft
 } from './utils/storage';
 import { parseCurrencyInput, formatCurrency } from './utils/calculations';
+import {
+  clearFirebaseCollaborationFromHash,
+  parseFirebaseCollaborationFromHash,
+  sanitizeCollaborationHash,
+  writeFirebaseCollaborationToHash
+} from './utils/firebaseCollaborationUrl';
+import {
+  subscribeToFirebaseSession,
+  writeFirebaseSessionState
+} from './utils/firebaseSync';
 
 const initialGameState = loadGameState();
 
@@ -89,34 +103,136 @@ function App() {
   const [amountDialog, setAmountDialog] = useState({ isOpen: false, mode: null, playerId: null });
   const [confirmState, setConfirmState] = useState({ isOpen: false, action: null, payload: null });
   const [isAddPlayerDialogOpen, setAddPlayerDialogOpen] = useState(false);
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [firebaseConfigDraft, setFirebaseConfigDraft] = useState(() => loadFirebaseConfigDraft());
+  const [firebaseSessionIdDraft, setFirebaseSessionIdDraft] = useState(() => loadFirebaseSessionIdDraft());
+  const [collaborationSession, setCollaborationSession] = useState(() => parseFirebaseCollaborationFromHash());
+  const [isFirebaseReady, setFirebaseReady] = useState(false);
+  const [collaborationError, setCollaborationError] = useState('');
+  const lastRemoteStateRef = useRef(null);
 
   useEffect(() => {
     saveGameState({ players, settings });
   }, [players, settings]);
 
   useEffect(() => {
+    saveFirebaseConfigDraft(firebaseConfigDraft);
+  }, [firebaseConfigDraft]);
+
+  useEffect(() => {
+    saveFirebaseSessionIdDraft(firebaseSessionIdDraft);
+  }, [firebaseSessionIdDraft]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') {
       return undefined;
     }
 
-    const syncStateFromUrl = () => {
-      const urlState = loadGameStateFromUrl();
-      if (!urlState) {
-        return;
-      }
-
-      setPlayers(urlState.players);
-      setSettings(urlState.settings);
+    const syncCollaborationModeFromUrl = () => {
+      sanitizeCollaborationHash();
+      const parsed = parseFirebaseCollaborationFromHash();
+      setCollaborationSession(parsed);
+      setCollaborationError('');
+      setFirebaseReady(false);
+      lastRemoteStateRef.current = null;
     };
 
-    window.addEventListener('hashchange', syncStateFromUrl);
-    window.addEventListener('popstate', syncStateFromUrl);
+    syncCollaborationModeFromUrl();
+
+    window.addEventListener('hashchange', syncCollaborationModeFromUrl);
+    window.addEventListener('popstate', syncCollaborationModeFromUrl);
 
     return () => {
-      window.removeEventListener('hashchange', syncStateFromUrl);
-      window.removeEventListener('popstate', syncStateFromUrl);
+      window.removeEventListener('hashchange', syncCollaborationModeFromUrl);
+      window.removeEventListener('popstate', syncCollaborationModeFromUrl);
     };
   }, []);
+
+  useEffect(() => {
+    if (!collaborationSession) {
+      return undefined;
+    }
+
+    let isActive = true;
+    let unsubscribe = () => {};
+
+    subscribeToFirebaseSession({
+      firebaseConfig: collaborationSession.firebaseConfig,
+      sessionId: collaborationSession.sessionId,
+      onState: (remoteState) => {
+        if (!isActive) {
+          return;
+        }
+
+        if (!remoteState) {
+          setFirebaseReady(true);
+          return;
+        }
+
+        const serialized = JSON.stringify(remoteState);
+        lastRemoteStateRef.current = serialized;
+        setPlayers(remoteState.players);
+        setSettings(remoteState.settings);
+        setFirebaseReady(true);
+      },
+      onError: (error) => {
+        if (!isActive) {
+          return;
+        }
+
+        console.error('Firebase session subscription error:', error);
+        setCollaborationError(error?.message ?? 'Unable to subscribe to Firebase session.');
+        setFirebaseReady(true);
+      }
+    })
+      .then((resolvedUnsubscribe) => {
+        if (!isActive) {
+          resolvedUnsubscribe();
+          return;
+        }
+
+        unsubscribe = resolvedUnsubscribe;
+      })
+      .catch((error) => {
+        if (!isActive) {
+          return;
+        }
+
+        console.error('Firebase session initialization error:', error);
+        setCollaborationError(error?.message ?? 'Unable to initialize Firebase collaboration.');
+        setFirebaseReady(true);
+      });
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [collaborationSession]);
+
+  useEffect(() => {
+    if (!collaborationSession || !isFirebaseReady) {
+      return;
+    }
+
+    const nextState = { players, settings };
+    const serializedState = JSON.stringify(nextState);
+    if (serializedState === lastRemoteStateRef.current) {
+      return;
+    }
+
+    writeFirebaseSessionState({
+      firebaseConfig: collaborationSession.firebaseConfig,
+      sessionId: collaborationSession.sessionId,
+      state: nextState
+    })
+      .then(() => {
+        lastRemoteStateRef.current = serializedState;
+      })
+      .catch((error) => {
+        console.error('Firebase session write error:', error);
+        setCollaborationError(error?.message ?? 'Unable to sync state to Firebase session.');
+      });
+  }, [players, settings, collaborationSession, isFirebaseReady]);
 
   const openBuyInModal = (playerId) => {
     setAmountDialog({ isOpen: true, mode: 'buy-in', playerId });
@@ -127,7 +243,11 @@ function App() {
   };
 
   const openDefaultBuyInModal = () => {
-    setAmountDialog({ isOpen: true, mode: 'settings', playerId: null });
+    setSettingsOpen(true);
+  };
+
+  const closeSettingsModal = () => {
+    setSettingsOpen(false);
   };
 
   const closeAmountDialog = () => {
@@ -188,10 +308,6 @@ function App() {
               : player
           )
         );
-        break;
-      }
-      case 'settings': {
-        setSettings((prev) => ({ ...prev, defaultBuyIn: amount }));
         break;
       }
       default:
@@ -342,27 +458,61 @@ function App() {
           secondaryActionLabel: hasExisting ? 'Clear Stack' : null
         };
       }
-      case 'settings': {
-        const defaultAmount = settings.defaultBuyIn ?? 0;
-        return {
-          title: 'Set Table Default',
-          description: 'This amount pre-fills every buy-in at the table.',
-          defaultAmount,
-          confirmLabel: 'Set',
-          confirmTextBuilder: (value) => `Set ${formatCurrency(value)}`,
-          allowZero: true
-        };
-      }
       default:
         return null;
     }
   }, [amountDialog, activePlayer, settings]);
+
+  const handleStartCollaboration = () => {
+    const sessionId = firebaseSessionIdDraft.trim();
+    if (!sessionId) {
+      setCollaborationError('Session id is required.');
+      return;
+    }
+
+    let parsedConfig;
+    try {
+      parsedConfig = JSON.parse(firebaseConfigDraft);
+    } catch {
+      setCollaborationError('Firebase config must be valid JSON.');
+      return;
+    }
+
+    const didWrite = writeFirebaseCollaborationToHash({
+      firebaseConfig: parsedConfig,
+      sessionId
+    });
+
+    if (!didWrite) {
+      setCollaborationError('Unable to write Firebase collaboration metadata to URL.');
+      return;
+    }
+
+    const parsedSession = parseFirebaseCollaborationFromHash();
+    setFirebaseReady(false);
+    setCollaborationSession(parsedSession);
+    setCollaborationError('');
+    lastRemoteStateRef.current = null;
+  };
+
+  const handleLeaveCollaboration = () => {
+    clearFirebaseCollaborationFromHash();
+    setCollaborationSession(null);
+    setFirebaseReady(false);
+    setCollaborationError('');
+    lastRemoteStateRef.current = null;
+  };
+
+  const collaborationMode = collaborationSession ? 'firebase' : 'local';
 
   return (
     <div className="app container">
       <header className="app-header">
         <div>
           <p className="eyebrow">Home Game</p>
+          <p className={`mode-badge ${collaborationMode === 'firebase' ? 'firebase' : ''}`}>
+            {collaborationMode === 'firebase' ? 'Firebase Shared Session' : 'Local Session'}
+          </p>
         </div>
       </header>
 
@@ -446,6 +596,23 @@ function App() {
           onCancel={closeAmountDialog}
         />
       )}
+
+      <GameSettingsModal
+        isOpen={isSettingsOpen}
+        defaultBuyIn={settings.defaultBuyIn ?? 0}
+        firebaseConfigDraft={firebaseConfigDraft}
+        firebaseSessionIdDraft={firebaseSessionIdDraft}
+        collaborationMode={collaborationMode}
+        collaborationError={collaborationError}
+        onClose={closeSettingsModal}
+        onSaveDefaultBuyIn={(defaultBuyIn) => {
+          setSettings((prev) => ({ ...prev, defaultBuyIn }));
+        }}
+        onFirebaseConfigDraftChange={setFirebaseConfigDraft}
+        onFirebaseSessionIdDraftChange={setFirebaseSessionIdDraft}
+        onStartCollaboration={handleStartCollaboration}
+        onLeaveCollaboration={handleLeaveCollaboration}
+      />
 
       <AddPlayer
         isOpen={isAddPlayerDialogOpen}

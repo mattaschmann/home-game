@@ -182,3 +182,33 @@ export const writeEncodedStateToHash = (encodedState) => {
     return false;
   }
 };
+
+export const clearEncodedStateFromHash = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    const currentHash = window.location.hash.startsWith('#')
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+
+    if (!currentHash) {
+      return true;
+    }
+
+    const params = new URLSearchParams(currentHash);
+    if (!params.has(STATE_PARAM)) {
+      return true;
+    }
+
+    params.delete(STATE_PARAM);
+    const nextHash = params.toString();
+    const nextUrl = `${window.location.pathname}${window.location.search}${nextHash ? `#${nextHash}` : ''}`;
+    window.history.replaceState(window.history.state, '', nextUrl);
+    return true;
+  } catch (error) {
+    console.error('Error clearing legacy URL state from hash:', error);
+    return false;
+  }
+};
