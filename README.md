@@ -83,6 +83,22 @@ Notes:
 - Without Firebase URL metadata, the app stays in local-only mode.
 - Collaboration metadata in the URL includes Firebase config + session id (base64-url encoded).
 
+## Bitly sharing (optional)
+
+The app can share the current session URL directly out of the box. You can optionally connect Bitly so shared URLs are shorter.
+
+- Bitly connection is configured in **Game Settings**.
+- Bitly auth/config is stored locally in the current browser/device.
+- If Bitly is not connected, sharing still works and uses the full URL.
+- For Firebase collaboration sessions, once a collaborator creates a Bitly short link, it is stored in Firebase and reused by other collaborators for the same long URL.
+
+Bitly BYO token setup:
+
+1. Generate an access token from your Bitly account settings.
+2. In the app, open **Game Settings > Bitly Sharing**.
+3. Paste the access token and click **Save Bitly Settings**.
+4. If needed, click **Clear Bitly Settings** to remove local Bitly config from this browser.
+
 ## Tech stack
 
 - React 19

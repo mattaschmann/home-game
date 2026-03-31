@@ -9,7 +9,11 @@ const STORAGE_KEYS = {
   PLAYER_NAMES: 'poker-player-names',
   SETTINGS: 'poker-settings',
   FIREBASE_CONFIG_DRAFT: 'poker-firebase-config-draft',
-  FIREBASE_SESSION_ID_DRAFT: 'poker-firebase-session-id-draft'
+  FIREBASE_SESSION_ID_DRAFT: 'poker-firebase-session-id-draft',
+  BITLY_ACCESS_TOKEN: 'poker-bitly-access-token',
+  BITLY_GROUP_GUID: 'poker-bitly-group-guid',
+  BITLY_DOMAIN: 'poker-bitly-domain',
+  BITLY_LINK_CACHE: 'poker-bitly-link-cache'
 };
 
 const DEFAULT_SETTINGS = {
@@ -230,4 +234,75 @@ export const saveFirebaseSessionIdDraft = (sessionId) => {
   }
 
   saveToStorage(STORAGE_KEYS.FIREBASE_SESSION_ID_DRAFT, sessionId.trim());
+};
+
+export const loadBitlyAccessToken = () => {
+  const value = loadFromStorage(STORAGE_KEYS.BITLY_ACCESS_TOKEN, '');
+  return typeof value === 'string' ? value : '';
+};
+
+export const saveBitlyAccessToken = (value) => {
+  if (typeof value !== 'string') {
+    return;
+  }
+
+  saveToStorage(STORAGE_KEYS.BITLY_ACCESS_TOKEN, value.trim());
+};
+
+export const clearBitlyAccessToken = () => {
+  if (!hasStorage()) {
+    return;
+  }
+
+  localStorage.removeItem(STORAGE_KEYS.BITLY_ACCESS_TOKEN);
+};
+
+export const loadBitlyGroupGuid = () => {
+  const value = loadFromStorage(STORAGE_KEYS.BITLY_GROUP_GUID, '');
+  return typeof value === 'string' ? value : '';
+};
+
+export const saveBitlyGroupGuid = (value) => {
+  if (typeof value !== 'string') {
+    return;
+  }
+
+  saveToStorage(STORAGE_KEYS.BITLY_GROUP_GUID, value.trim());
+};
+
+export const loadBitlyDomain = () => {
+  const value = loadFromStorage(STORAGE_KEYS.BITLY_DOMAIN, 'bit.ly');
+  return typeof value === 'string' && value.trim() ? value.trim() : 'bit.ly';
+};
+
+export const saveBitlyDomain = (value) => {
+  if (typeof value !== 'string') {
+    return;
+  }
+
+  const nextValue = value.trim() || 'bit.ly';
+  saveToStorage(STORAGE_KEYS.BITLY_DOMAIN, nextValue);
+};
+
+export const loadBitlyLinkCache = () => {
+  const value = loadFromStorage(STORAGE_KEYS.BITLY_LINK_CACHE, {});
+  if (!isObject(value)) {
+    return {};
+  }
+
+  const result = {};
+  Object.entries(value).forEach(([key, mappedUrl]) => {
+    if (typeof key === 'string' && typeof mappedUrl === 'string' && key && mappedUrl) {
+      result[key] = mappedUrl;
+    }
+  });
+  return result;
+};
+
+export const saveBitlyLinkCache = (cache) => {
+  if (!isObject(cache)) {
+    return;
+  }
+
+  saveToStorage(STORAGE_KEYS.BITLY_LINK_CACHE, cache);
 };

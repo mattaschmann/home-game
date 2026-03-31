@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously } from 'firebase/auth';
-import { doc, getFirestore, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, getDoc, getFirestore, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 
 const DEFAULT_SETTINGS = { defaultBuyIn: 10 };
 
@@ -111,6 +111,17 @@ const ensureSession = async (firebaseConfig) => {
 
 const getSessionDocRef = (db, sessionId) => doc(db, 'homeGameSessions', sessionId);
 
+const toShortLinkKey = (longUrl) => {
+  let hash = 2166136261;
+
+  for (let index = 0; index < longUrl.length; index += 1) {
+    hash ^= longUrl.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return `u${(hash >>> 0).toString(36)}`;
+};
+
 export const subscribeToFirebaseSession = async ({ firebaseConfig, sessionId, onState, onError }) => {
   const { db } = await ensureSession(firebaseConfig);
   const sessionRef = getSessionDocRef(db, sessionId);
@@ -144,6 +155,76 @@ export const writeFirebaseSessionState = async ({ firebaseConfig, sessionId, sta
     {
       ...normalizedState,
       updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
+};
+
+export const loadFirebaseSharedShortLink = async ({ firebaseConfig, sessionId, longUrl }) => {
+  if (typeof longUrl !== 'string' || !longUrl) {
+    return null;
+  }
+
+  const { db } = await ensureSession(firebaseConfig);
+  const sessionRef = getSessionDocRef(db, sessionId);
+  const snapshot = await getDoc(sessionRef);
+  const data = snapshot.data();
+  if (!data || typeof data !== 'object') {
+    return null;
+  }
+
+  const shareLinks = data.shareLinks;
+  if (!shareLinks || typeof shareLinks !== 'object') {
+    return null;
+  }
+
+  const key = toShortLinkKey(longUrl);
+  const entry = shareLinks[key];
+
+  if (!entry || typeof entry !== 'object') {
+    return null;
+  }
+
+  if (entry.longUrl !== longUrl || typeof entry.shortUrl !== 'string' || !entry.shortUrl) {
+    return null;
+  }
+
+  return entry.shortUrl;
+};
+
+export const saveFirebaseSharedShortLink = async ({
+  firebaseConfig,
+  sessionId,
+  longUrl,
+  shortUrl,
+  provider = 'bitly'
+}) => {
+  if (
+    typeof longUrl !== 'string' ||
+    !longUrl ||
+    typeof shortUrl !== 'string' ||
+    !shortUrl ||
+    typeof provider !== 'string' ||
+    !provider
+  ) {
+    return;
+  }
+
+  const { db } = await ensureSession(firebaseConfig);
+  const sessionRef = getSessionDocRef(db, sessionId);
+  const key = toShortLinkKey(longUrl);
+
+  await setDoc(
+    sessionRef,
+    {
+      shareLinks: {
+        [key]: {
+          longUrl,
+          shortUrl,
+          provider,
+          updatedAt: Date.now()
+        }
+      }
     },
     { merge: true }
   );

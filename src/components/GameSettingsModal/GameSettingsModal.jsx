@@ -7,12 +7,19 @@ export default function GameSettingsModal({
   defaultBuyIn,
   firebaseConfigDraft,
   firebaseSessionIdDraft,
+  bitlyAccessTokenDraft,
+  bitlyConnected,
+  bitlyError,
+  bitlyEligibilityReason,
   collaborationMode,
   collaborationError,
   onClose,
   onSaveDefaultBuyIn,
   onFirebaseConfigDraftChange,
   onFirebaseSessionIdDraftChange,
+  onBitlyAccessTokenDraftChange,
+  onSaveBitlySettings,
+  onClearBitlySettings,
   onStartCollaboration,
   onLeaveCollaboration
 }) {
@@ -143,6 +150,53 @@ export default function GameSettingsModal({
                 Leave Collaboration
               </button>
             )}
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h3>Bitly Sharing (optional)</h3>
+          <p className="settings-help">
+            Paste your Bitly access token to shorten shared links. Without Bitly, the app shares the full URL.
+          </p>
+          <p className={`settings-mode ${bitlyConnected ? 'active' : ''}`}>
+            Status: {bitlyConnected ? 'Connected' : 'Not connected'}
+          </p>
+          <p className="settings-help">
+            Bitly token is stored locally in this browser/device and is never shared in Firebase metadata.
+          </p>
+
+          <label className="settings-label" htmlFor="bitly-access-token">
+            Bitly access token
+          </label>
+          <input
+            id="bitly-access-token"
+            type="password"
+            className="settings-text-input"
+            value={bitlyAccessTokenDraft}
+            onChange={(event) => onBitlyAccessTokenDraftChange(event.target.value)}
+            placeholder="Paste your Bitly access token"
+          />
+
+          {bitlyError && <p className="settings-error">{bitlyError}</p>}
+          {!bitlyError && bitlyEligibilityReason && (
+            <p className="settings-help">{bitlyEligibilityReason}</p>
+          )}
+
+          <div className="settings-actions-row">
+            <button
+              type="button"
+              className="settings-button primary"
+              onClick={onSaveBitlySettings}
+            >
+              Save Bitly Settings
+            </button>
+            <button
+              type="button"
+              className="settings-button ghost"
+              onClick={onClearBitlySettings}
+            >
+              Clear Bitly Settings
+            </button>
           </div>
         </div>
 

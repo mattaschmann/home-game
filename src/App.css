@@ -148,6 +148,13 @@
   color: var(--loss);
 }
 
+.app-share-feedback {
+  margin-top: calc(var(--spacing-sm) * -1);
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
 .player-grid {
   display: flex;
   flex-direction: column;
