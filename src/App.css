@@ -9,6 +9,50 @@
   margin-bottom: var(--spacing-sm);
 }
 
+.app-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+}
+
+.app-session-name-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 1.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.app-session-name-button:hover,
+.app-session-name-button:focus-visible {
+  color: var(--accent);
+}
+
+.app-session-name-button:focus-visible,
+.app-session-name-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.app-session-name-input {
+  font: inherit;
+  font-size: 1.65rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.2rem 0.45rem;
+  min-width: min(420px, 90vw);
+}
+
 .app-header h1 {
   font-size: 2.25rem;
   margin: 0;
@@ -213,7 +257,8 @@
     align-items: flex-end;
   }
 
-  .app-header h1 {
-    font-size: 2.75rem;
+  .app-session-name-button,
+  .app-session-name-input {
+    font-size: 2rem;
   }
 }

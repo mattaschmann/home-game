@@ -17,7 +17,8 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_SETTINGS = {
-  defaultBuyIn: 10
+  defaultBuyIn: 10,
+  sessionName: 'Home Game'
 };
 
 const DEFAULT_GAME_STATE = {
@@ -85,8 +86,14 @@ const normalizeSettings = (settings) => {
   }
 
   const defaultBuyIn = Number(settings.defaultBuyIn);
+  const sessionName =
+    typeof settings.sessionName === 'string' && settings.sessionName.trim()
+      ? settings.sessionName.trim()
+      : DEFAULT_SETTINGS.sessionName;
+
   return {
-    defaultBuyIn: Number.isFinite(defaultBuyIn) ? defaultBuyIn : DEFAULT_SETTINGS.defaultBuyIn
+    defaultBuyIn: Number.isFinite(defaultBuyIn) ? defaultBuyIn : DEFAULT_SETTINGS.defaultBuyIn,
+    sessionName
   };
 };
 

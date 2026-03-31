@@ -140,10 +140,41 @@ function App() {
   const [isFirebaseReady, setFirebaseReady] = useState(false);
   const [collaborationError, setCollaborationError] = useState('');
   const lastRemoteStateRef = useRef(null);
+  const sessionNameInputRef = useRef(null);
+  const [isEditingSessionName, setIsEditingSessionName] = useState(false);
+  const [sessionNameDraft, setSessionNameDraft] = useState('');
+
+  const sessionName =
+    typeof settings.sessionName === 'string' && settings.sessionName.trim()
+      ? settings.sessionName.trim()
+      : 'Home Game';
 
   useEffect(() => {
     saveGameState({ players, settings });
   }, [players, settings]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.title = sessionName;
+  }, [sessionName]);
+
+  useEffect(() => {
+    if (!isEditingSessionName) {
+      setSessionNameDraft(sessionName);
+    }
+  }, [isEditingSessionName, sessionName]);
+
+  useEffect(() => {
+    if (!isEditingSessionName) {
+      return;
+    }
+
+    sessionNameInputRef.current?.focus();
+    sessionNameInputRef.current?.select();
+  }, [isEditingSessionName]);
 
   useEffect(() => {
     saveFirebaseConfigDraft(firebaseConfigDraft);
@@ -654,8 +685,8 @@ function App() {
 
       if (navigator.share) {
         await navigator.share({
-          title: 'Home Game',
-          text: 'Join my Home Game session',
+          title: sessionName,
+          text: `Join my ${sessionName} session`,
           url: shareUrl
         });
         return;
@@ -767,11 +798,59 @@ function App() {
 
   const collaborationMode = collaborationSession ? 'firebase' : 'local';
 
+  const startSessionNameEdit = () => {
+    setSessionNameDraft(sessionName);
+    setIsEditingSessionName(true);
+  };
+
+  const saveSessionName = () => {
+    const nextSessionName = sessionNameDraft.trim() || 'Home Game';
+    setSettings((prev) => ({
+      ...prev,
+      sessionName: nextSessionName
+    }));
+    setIsEditingSessionName(false);
+  };
+
+  const cancelSessionNameEdit = () => {
+    setSessionNameDraft(sessionName);
+    setIsEditingSessionName(false);
+  };
+
   return (
     <div className="app container">
       <header className="app-header">
-        <div>
-          <p className="eyebrow">Home Game</p>
+        <div className="app-title-group">
+          {isEditingSessionName ? (
+            <input
+              ref={sessionNameInputRef}
+              type="text"
+              className="app-session-name-input"
+              value={sessionNameDraft}
+              maxLength={80}
+              onChange={(event) => setSessionNameDraft(event.target.value)}
+              onBlur={saveSessionName}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  saveSessionName();
+                }
+
+                if (event.key === 'Escape') {
+                  cancelSessionNameEdit();
+                }
+              }}
+              aria-label="Session name"
+            />
+          ) : (
+            <button
+              type="button"
+              className="app-session-name-button"
+              onClick={startSessionNameEdit}
+              title="Click to edit session name"
+            >
+              {sessionName}
+            </button>
+          )}
           <p className={`mode-badge ${collaborationMode === 'firebase' ? 'firebase' : ''}`}>
             {collaborationMode === 'firebase' ? 'Firebase Shared Session' : 'Local Session'}
           </p>
