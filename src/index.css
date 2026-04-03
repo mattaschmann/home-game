@@ -162,3 +162,11 @@ input {
 body.modal-open {
   overflow: hidden;
 }
+
+@media (max-width: 600px) {
+  .modal-backdrop {
+    align-items: flex-start;
+    padding: calc(var(--spacing-md) + env(safe-area-inset-top)) var(--spacing-md) var(--spacing-md);
+    overflow-y: auto;
+  }
+}
