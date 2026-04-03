@@ -73,6 +73,10 @@
   border-radius: var(--border-radius);
   font-weight: 500;
   transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .buyin-button.cancel {

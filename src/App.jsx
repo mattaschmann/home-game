@@ -561,7 +561,7 @@ function App() {
           defaultAmount: stackAmount,
           confirmLabel: 'Save',
           allowZero: true,
-          secondaryActionLabel: hasExisting ? 'Clear Stack' : null
+          secondaryActionLabel: hasExisting ? 'Clear' : null
         };
       }
       default:
