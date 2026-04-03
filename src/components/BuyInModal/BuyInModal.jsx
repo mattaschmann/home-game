@@ -2,8 +2,30 @@ import React, { useState, useEffect, useRef } from 'react';
 import { parseCurrencyInput, formatCurrency } from '../../utils/calculations';
 import './BuyInModal.css';
 
-export default function BuyInModal({
-  isOpen,
+export default function BuyInModal(props) {
+  const { isOpen } = props;
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('modal-open');
+      return () => document.body.classList.remove('modal-open');
+    }
+
+    document.body.classList.remove('modal-open');
+    return undefined;
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <BuyInModalContent
+      key={`${props.playerName ?? 'player'}-${props.defaultAmount ?? 10}`}
+      {...props}
+    />
+  );
+}
+
+function BuyInModalContent({
   playerName,
   title,
   description,
@@ -15,28 +37,17 @@ export default function BuyInModal({
   secondaryActionLabel,
   onSecondaryAction
 }) {
-  const [amount, setAmount] = useState(defaultAmount.toFixed(2));
+  const [amount, setAmount] = useState(() => defaultAmount.toFixed(2));
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.classList.add('modal-open');
-      setAmount(defaultAmount.toFixed(2));
-      // Focus input after a short delay to ensure modal is rendered
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }, 100);
-    } else {
-      document.body.classList.remove('modal-open');
-    }
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 100);
 
-    return () => {
-      document.body.classList.remove('modal-open');
-    };
-  }, [isOpen, defaultAmount]);
-
-  if (!isOpen) return null;
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {

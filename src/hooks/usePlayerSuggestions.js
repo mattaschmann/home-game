@@ -1,14 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { loadPlayerNames } from '../utils/storage';
 
 export function usePlayerSuggestions(inputValue) {
-  const [allNames, setAllNames] = useState([]);
-
-  // Load player names on mount
-  useEffect(() => {
-    const names = loadPlayerNames();
-    setAllNames(names);
-  }, []);
+  const [allNames, setAllNames] = useState(() => loadPlayerNames());
 
   // Filter suggestions based on input
   const suggestions = useMemo(() => {

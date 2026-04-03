@@ -10,7 +10,7 @@ import {
 } from '../../utils/calculations';
 import './Settlement.css';
 
-const buildVenmoLink = ({ handle, net, sessionName }) => {
+const buildVenmoLink = ({ handle, net, sessionName, noteOverride }) => {
   if (!handle || typeof net !== 'number' || Math.abs(net) < 0.01) {
     return null;
   }
@@ -22,8 +22,7 @@ const buildVenmoLink = ({ handle, net, sessionName }) => {
 
   const txn = net > 0 ? 'pay' : 'charge';
   const amount = Math.abs(net).toFixed(2);
-  const noteBase = sessionName?.trim() ? sessionName.trim() : 'Home Game';
-  const note = `${noteBase} settlement`;
+  const note = noteOverride?.trim() ? noteOverride.trim() : '';
   const params = new URLSearchParams({
     txn,
     recipients: normalizedHandle,
@@ -59,6 +58,7 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
         const finalStackRaw = player.finalStack ?? '';
         const finalStackAmount = parseCurrencyInput(finalStackRaw);
         const net = calculateNetAmount(finalStackAmount, invested);
+        const venmoHandle = player.venmoId ?? '';
         return {
           id: player.id,
           name: player.name,
@@ -66,7 +66,8 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
           finalStackRaw,
           finalStackAmount,
           net,
-          venmoLink: buildVenmoLink({ handle: player.venmoId ?? '', net, sessionName }),
+          venmoHandle,
+          venmoLink: buildVenmoLink({ handle: venmoHandle, net, sessionName }),
           display: formatNetAmount(net)
         };
       });
@@ -80,18 +81,42 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
   }, [players, sessionName]);
 
   const isBalanced = Math.abs(summary.difference) < 0.01;
-  const handleVenmoLinkClick = (event, venmoLink) => {
-    if (!venmoLink || typeof navigator === 'undefined' || typeof window === 'undefined') {
+  const handleVenmoLinkClick = async (event, standing) => {
+    if (!standing?.venmoLink || typeof window === 'undefined') {
       return;
     }
 
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    event.preventDefault();
+
+    const hasNavigator = typeof navigator !== 'undefined';
+    const isMobile = hasNavigator && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    let venmoWindow = null;
+
     if (!isMobile) {
+      venmoWindow = window.open('', '_blank', 'noopener,noreferrer');
+    }
+
+    let venmoLink = standing.venmoLink;
+
+    if (!venmoLink) {
       return;
     }
 
-    // Attempt to trigger the Venmo app; browser will still follow the fallback link.
-    window.location.href = venmoLink.appUrl;
+    if (isMobile) {
+      // Attempt deep link first; fall back to web link shortly after.
+      window.location.href = venmoLink.appUrl;
+      window.setTimeout(() => {
+        window.open(venmoLink.webUrl, '_blank', 'noopener,noreferrer');
+      }, 400);
+      return;
+    }
+
+    if (venmoWindow) {
+      venmoWindow.location.href = venmoLink.webUrl;
+      return;
+    }
+
+    window.open(venmoLink.webUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -129,38 +154,38 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
         {summary.standings.length === 0 ? (
           <p className="empty-state">Add players to enter and settle stacks.</p>
         ) : (
-          summary.standings.map((player) => {
-            const hasStack = player.finalStackRaw !== '';
+          summary.standings.map((standing) => {
+            const hasStack = standing.finalStackRaw !== '';
 
             return (
-              <div key={player.id} className="standing-row">
+              <div key={standing.id} className="standing-row">
                 <div className="standing-player">
-                  <span className="standing-name">{player.name}</span>
-                  <span className="standing-invested">{formatCurrency(player.invested)}</span>
+                  <span className="standing-name">{standing.name}</span>
+                  <span className="standing-invested">{formatCurrency(standing.invested)}</span>
                 </div>
                 <button
                   type="button"
                   className={`stack-chip ${hasStack ? 'has-value' : ''}`}
-                  onClick={() => onRequestStackEntry?.(player.id)}
+                  onClick={() => onRequestStackEntry?.(standing.id)}
                 >
                   <span className="stack-chip-label">Stack</span>
                   <span className="stack-chip-value">
-                    {hasStack ? formatCurrency(player.finalStackAmount) : 'Set Stack'}
+                    {hasStack ? formatCurrency(standing.finalStackAmount) : 'Set Stack'}
                   </span>
                 </button>
                 <div className="standing-actions">
-                  <span className={`standing-net ${player.display.className}`}>
-                    {player.display.text}
+                  <span className={`standing-net ${standing.display.className}`}>
+                    {standing.display.text}
                   </span>
-                  {player.venmoLink && (
+                  {standing.venmoLink && (
                     <a
-                      className={`standing-venmo-link ${player.venmoLink.txn}`}
-                      href={player.venmoLink.webUrl}
+                      className={`standing-venmo-link ${standing.venmoLink.txn}`}
+                      href={standing.venmoLink.webUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label={player.venmoLink.label}
-                      title={player.venmoLink.label}
-                      onClick={(event) => handleVenmoLinkClick(event, player.venmoLink)}
+                      aria-label={standing.venmoLink.label}
+                      title={standing.venmoLink.label}
+                      onClick={(event) => handleVenmoLinkClick(event, standing)}
                     >
                       <VenmoIcon />
                     </a>

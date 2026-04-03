@@ -21,10 +21,6 @@ export default function PlayerSettingsModal({
   onClose,
   onSave
 }) {
-  const [name, setName] = useState('');
-  const [venmoHandle, setVenmoHandle] = useState('');
-  const nameInputRef = useRef(null);
-
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add('modal-open');
@@ -32,21 +28,33 @@ export default function PlayerSettingsModal({
     }
 
     document.body.classList.remove('modal-open');
+    return undefined;
   }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen || !player) {
-      return;
-    }
-
-    setName(player.name ?? '');
-    setVenmoHandle(player.venmoId ?? '');
-    setTimeout(() => nameInputRef.current?.focus(), 50);
-  }, [isOpen, player?.id]);
 
   if (!isOpen || !player) {
     return null;
   }
+
+  return (
+    <PlayerSettingsModalContent
+      key={player.id}
+      player={player}
+      existingPlayers={existingPlayers}
+      onClose={onClose}
+      onSave={onSave}
+    />
+  );
+}
+
+function PlayerSettingsModalContent({ player, existingPlayers, onClose, onSave }) {
+  const [name, setName] = useState(() => player.name ?? '');
+  const [venmoHandle, setVenmoHandle] = useState(() => player.venmoId ?? '');
+  const nameInputRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => nameInputRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const trimmedName = name.trim();
   const isDuplicateName = existingPlayers.some(
@@ -85,7 +93,7 @@ export default function PlayerSettingsModal({
       <div className="player-settings-modal" role="dialog" aria-modal="true">
         <div className="player-settings-header">
           <p className="eyebrow">Player Settings</p>
-          <h3>Edit {player.name}</h3>
+           <h3>Edit {player.name}</h3>
           <p className="player-settings-hint">Update this player&apos;s name or link their Venmo handle.</p>
         </div>
 
