@@ -40,16 +40,27 @@ export default function PlayerCard({
   player,
   onRequestBuyIn,
   onRemovePlayer,
-  onUndoBuyIn
+  onUndoBuyIn,
+  onRequestSettings
 }) {
   const totalInvested = calculateTotalInvested(player.buyIns);
-  const buyInCount = player.buyIns.length;
 
   return (
     <article className="player-row">
       <div className="player-identity">
-        <span className="player-name">{player.name}</span>
-        <span className="buyin-chip">{buyInCount}</span>
+        <div className="player-name-stack">
+          <button
+            type="button"
+            className="player-name-button"
+            onClick={() => onRequestSettings?.(player.id)}
+            aria-label={`Edit settings for ${player.name}`}
+          >
+            <span className="player-name">{player.name}</span>
+          </button>
+          {player.venmoId && (
+            <span className="player-venmo-id">@{player.venmoId}</span>
+          )}
+        </div>
       </div>
 
       <div className="player-metrics">

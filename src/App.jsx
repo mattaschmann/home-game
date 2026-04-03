@@ -7,6 +7,7 @@ import Settlement from './components/Settlement/Settlement';
 import BuyInModal from './components/BuyInModal/BuyInModal';
 import ConfirmDialog from './components/ConfirmDialog/ConfirmDialog';
 import GameSettingsModal from './components/GameSettingsModal/GameSettingsModal';
+import PlayerSettingsModal from './components/PlayerSettingsModal/PlayerSettingsModal';
 import {
   loadGameState,
   saveGameState,
@@ -123,6 +124,7 @@ function App() {
   const [players, setPlayers] = useState(() => initialGameState.players);
   const [settings, setSettings] = useState(() => initialGameState.settings);
   const [amountDialog, setAmountDialog] = useState({ isOpen: false, mode: null, playerId: null });
+  const [playerSettingsDialog, setPlayerSettingsDialog] = useState({ isOpen: false, playerId: null });
   const [confirmState, setConfirmState] = useState({ isOpen: false, action: null, payload: null });
   const [isAddPlayerDialogOpen, setAddPlayerDialogOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
@@ -319,6 +321,14 @@ function App() {
     setAmountDialog({ isOpen: true, mode: 'stack', playerId });
   };
 
+  const openPlayerSettingsModal = (playerId) => {
+    setPlayerSettingsDialog({ isOpen: true, playerId });
+  };
+
+  const closePlayerSettingsModal = () => {
+    setPlayerSettingsDialog({ isOpen: false, playerId: null });
+  };
+
   const openDefaultBuyInModal = () => {
     setSettingsOpen(true);
   };
@@ -351,11 +361,31 @@ function App() {
         id: uuidv4(),
         name: trimmedName,
         buyIns: [],
-        finalStack: ''
+        finalStack: '',
+        venmoId: ''
       }
     ]);
     addPlayerNameToHistory(trimmedName);
     return true;
+  };
+
+  const handleSavePlayerSettings = (playerId, updates) => {
+    if (!playerId) {
+      return;
+    }
+
+    setPlayers((prev) =>
+      prev.map((player) =>
+        player.id === playerId
+          ? {
+              ...player,
+              name: updates.name,
+              venmoId: updates.venmoId
+            }
+          : player
+      )
+    );
+    closePlayerSettingsModal();
   };
 
   const openAddPlayerDialog = () => setAddPlayerDialogOpen(true);
@@ -500,6 +530,7 @@ function App() {
   );
 
   const activePlayer = players.find((player) => player.id === amountDialog.playerId);
+  const playerForSettings = players.find((player) => player.id === playerSettingsDialog.playerId);
 
   const dialogConfig = useMemo(() => {
     if (!amountDialog.isOpen || !amountDialog.mode) {
@@ -906,12 +937,17 @@ function App() {
               onRequestBuyIn={openBuyInModal}
               onRemovePlayer={handleRemovePlayer}
               onUndoBuyIn={handleUndoBuyIn}
+              onRequestSettings={openPlayerSettingsModal}
             />
           ))}
         </div>
       )}
 
-      <Settlement players={players} onRequestStackEntry={openStackModal} />
+      <Settlement
+        players={players}
+        onRequestStackEntry={openStackModal}
+        sessionName={sessionName}
+      />
 
       <footer className="app-footer">
         <a
@@ -966,6 +1002,14 @@ function App() {
         onClearBitlySettings={handleClearBitlySettings}
         onStartCollaboration={handleStartCollaboration}
         onLeaveCollaboration={handleLeaveCollaboration}
+      />
+
+      <PlayerSettingsModal
+        isOpen={playerSettingsDialog.isOpen}
+        player={playerForSettings}
+        existingPlayers={players}
+        onClose={closePlayerSettingsModal}
+        onSave={(updates) => handleSavePlayerSettings(playerSettingsDialog.playerId, updates)}
       />
 
       <AddPlayer

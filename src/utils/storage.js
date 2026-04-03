@@ -52,6 +52,19 @@ const normalizeBuyIns = (buyIns) => {
     .filter(Boolean);
 };
 
+const normalizeVenmoId = (venmoId) => {
+  if (typeof venmoId !== 'string') {
+    return '';
+  }
+
+  const trimmed = venmoId.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  return trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
+};
+
 const normalizePlayers = (players) => {
   if (!Array.isArray(players)) {
     return [];
@@ -74,7 +87,8 @@ const normalizePlayers = (players) => {
         id: player.id,
         name: player.name,
         buyIns: normalizeBuyIns(player.buyIns),
-        finalStack
+        finalStack,
+        venmoId: normalizeVenmoId(player.venmoId)
       };
     })
     .filter(Boolean);

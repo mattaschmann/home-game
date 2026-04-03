@@ -112,12 +112,46 @@
   color: var(--text-muted);
 }
 
+.standing-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
 .standing-net {
   font-weight: 600;
   text-align: right;
   min-width: 88px;
-  margin-left: auto;
-  align-self: center;
+}
+
+.standing-venmo-link {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff3366;
+  transition: transform 140ms ease, opacity 140ms ease;
+}
+
+.standing-venmo-link svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.standing-venmo-link.pay,
+.standing-venmo-link.charge {
+  color: #ff3366;
+}
+
+.standing-venmo-link:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
 }
 
 .stack-chip {
@@ -170,7 +204,7 @@
     width: 100%;
   }
 
-  .standing-net {
-    width: 100%;
+  .standing-actions {
+    justify-content: flex-start;
   }
 }

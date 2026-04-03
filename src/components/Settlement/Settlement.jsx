@@ -10,7 +10,44 @@ import {
 } from '../../utils/calculations';
 import './Settlement.css';
 
-export default function Settlement({ players, onRequestStackEntry }) {
+const buildVenmoLink = ({ handle, net, sessionName }) => {
+  if (!handle || typeof net !== 'number' || Math.abs(net) < 0.01) {
+    return null;
+  }
+
+  const normalizedHandle = handle.replace(/^@+/, '').trim();
+  if (!normalizedHandle) {
+    return null;
+  }
+
+  const txn = net > 0 ? 'pay' : 'charge';
+  const amount = Math.abs(net).toFixed(2);
+  const noteBase = sessionName?.trim() ? sessionName.trim() : 'Home Game';
+  const note = `${noteBase} settlement`;
+  const params = new URLSearchParams({
+    txn,
+    recipients: normalizedHandle,
+    amount,
+    note,
+    audience: 'friends'
+  });
+  const query = params.toString();
+
+  return {
+    txn,
+    appUrl: `venmo://paycharge?${query}`,
+    webUrl: `https://venmo.com/?${query}`,
+    label: txn === 'pay' ? 'Pay via Venmo' : 'Request via Venmo'
+  };
+};
+
+const VenmoIcon = () => (
+  <svg viewBox="0 0 512 512" aria-hidden="true" focusable="false">
+    <path d="M278 387H174.32L132.75 138.44l90.75-8.62 22 176.87c20.53-33.45 45.88-86 45.88-121.87 0-19.62-3.36-33-8.61-44L365.4 124.1c9.56 15.78 13.86 32 13.86 52.57C379.25 242.17 323.34 327.26 278 387Z" />
+  </svg>
+);
+
+export default function Settlement({ players, onRequestStackEntry, sessionName }) {
   const summary = useMemo(() => {
     const totalInvested = calculateTotalPot(players);
     const totalCashedOut = calculateTotalCashedOut(players);
@@ -29,6 +66,7 @@ export default function Settlement({ players, onRequestStackEntry }) {
           finalStackRaw,
           finalStackAmount,
           net,
+          venmoLink: buildVenmoLink({ handle: player.venmoId ?? '', net, sessionName }),
           display: formatNetAmount(net)
         };
       });
@@ -39,9 +77,22 @@ export default function Settlement({ players, onRequestStackEntry }) {
       difference,
       standings
     };
-  }, [players]);
+  }, [players, sessionName]);
 
   const isBalanced = Math.abs(summary.difference) < 0.01;
+  const handleVenmoLinkClick = (event, venmoLink) => {
+    if (!venmoLink || typeof navigator === 'undefined' || typeof window === 'undefined') {
+      return;
+    }
+
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!isMobile) {
+      return;
+    }
+
+    // Attempt to trigger the Venmo app; browser will still follow the fallback link.
+    window.location.href = venmoLink.appUrl;
+  };
 
   return (
     <section className="settlement">
@@ -97,7 +148,24 @@ export default function Settlement({ players, onRequestStackEntry }) {
                     {hasStack ? formatCurrency(player.finalStackAmount) : 'Set Stack'}
                   </span>
                 </button>
-                <span className={`standing-net ${player.display.className}`}>{player.display.text}</span>
+                <div className="standing-actions">
+                  <span className={`standing-net ${player.display.className}`}>
+                    {player.display.text}
+                  </span>
+                  {player.venmoLink && (
+                    <a
+                      className={`standing-venmo-link ${player.venmoLink.txn}`}
+                      href={player.venmoLink.webUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={player.venmoLink.label}
+                      title={player.venmoLink.label}
+                      onClick={(event) => handleVenmoLinkClick(event, player.venmoLink)}
+                    >
+                      <VenmoIcon />
+                    </a>
+                  )}
+                </div>
               </div>
             );
           })
