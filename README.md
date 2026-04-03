@@ -18,6 +18,8 @@ It helps you:
 - log buy-ins for each player
 - record final stacks at the end of the game
 - see who is up or down in the settlement view
+- store optional Venmo handles per player for one-tap settlement links
+- share the current session link (with optional Bitly shortening) when people join remotely
 - reset values or remove players when the table changes
 
 ## Live Demo
@@ -31,6 +33,8 @@ It helps you:
 - You can add a player from scratch or reuse names from past games.
 - Buy-ins and final stacks use dollar amounts and the app calculates totals automatically.
 - The settlement section compares total buy-ins against total stacks to show whether the game is balanced.
+- Tap the session name in the header to rename it; the name persists locally, syncs via Firebase collaboration, and is used in share dialogs/browser titles.
+- Click a player's name to open Player Settings where you can rename them or add a Venmo handle that syncs and powers settlement links.
 - Optional Firebase collaboration mode can sync a shared session through a URL that contains base64-url encoded Firebase config + session id metadata.
 
 ## Firebase collaboration (optional)
@@ -83,14 +87,17 @@ Notes:
 - Without Firebase URL metadata, the app stays in local-only mode.
 - Collaboration metadata in the URL includes Firebase config + session id (base64-url encoded).
 
-## Bitly sharing (optional)
+## Share links & Bitly (optional)
 
-The app can share the current session URL directly out of the box. You can optionally connect Bitly so shared URLs are shorter.
+- The Share Link button uses the Web Share API whenever available and falls back to copying the link to the clipboard.
+- Sharing works even without Bitly; you'll share the canonical URL for the current session (including Firebase metadata if enabled).
+- In Firebase collaboration mode, the first short link that gets created for a session is stored in Firestore so other collaborators can reuse it automatically.
+
+You can optionally connect Bitly so shared URLs are shorter.
 
 - Bitly connection is configured in **Game Settings**.
 - Bitly auth/config is stored locally in the current browser/device.
 - If Bitly is not connected, sharing still works and uses the full URL.
-- For Firebase collaboration sessions, once a collaborator creates a Bitly short link, it is stored in Firebase and reused by other collaborators for the same long URL.
 
 Bitly BYO token setup:
 
@@ -99,10 +106,18 @@ Bitly BYO token setup:
 3. Paste the access token and click **Save Bitly Settings**.
 4. If needed, click **Clear Bitly Settings** to remove local Bitly config from this browser.
 
+## Player Venmo links (optional)
+
+- Open Player Settings by clicking a player's name to add their Venmo handle (you can include or omit the `@`).
+- Handles sync just like other player data, so collaborators in Firebase sessions see the same info.
+- The Settlement view shows a Venmo icon next to each player with a handle; tapping it opens the correct pay/request flow with the owed amount pre-filled (deep link on mobile with a venmo.com fallback on desktop).
+- Leave the handle blank if the player doesn't use Venmo; no links are shown for them.
+
 ## Tech stack
 
 - React 19
 - Vite
+- TypeScript tooling (tsconfig + editor type checking for the JSX files)
 - `gh-pages` for deployment
 
 ## Scripts
