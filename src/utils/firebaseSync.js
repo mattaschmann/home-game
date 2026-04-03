@@ -9,6 +9,19 @@ const DEFAULT_SETTINGS = {
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
+const normalizeVenmoId = (venmoId) => {
+  if (typeof venmoId !== 'string') {
+    return '';
+  }
+
+  const trimmed = venmoId.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  return trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
+};
+
 const normalizeBuyIns = (buyIns) => {
   if (!Array.isArray(buyIns)) {
     return [];
@@ -53,7 +66,8 @@ const normalizePlayers = (players) => {
         id: player.id,
         name: player.name,
         buyIns: normalizeBuyIns(player.buyIns),
-        finalStack
+        finalStack,
+        venmoId: normalizeVenmoId(player.venmoId)
       };
     })
     .filter(Boolean);
