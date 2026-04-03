@@ -23,7 +23,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.15rem;
+  justify-content: center;
+  gap: 0.1rem;
 }
 
 .player-name-button {
@@ -37,6 +38,8 @@
   color: var(--text-primary);
   font: inherit;
   font-weight: 600;
+  min-height: 0px;
+  margin-top: 10px;
 }
 
 .player-name-button:hover .player-name,
@@ -56,9 +59,12 @@
 }
 
 .player-venmo-id {
-  font-size: 0.75rem;
-  letter-spacing: 0.02em;
-  color: var(--text-secondary);
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  line-height: 1;
+  min-height: 10px;
 }
 
 .player-metrics {

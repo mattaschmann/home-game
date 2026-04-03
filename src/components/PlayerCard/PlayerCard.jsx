@@ -57,9 +57,7 @@ export default function PlayerCard({
           >
             <span className="player-name">{player.name}</span>
           </button>
-          {player.venmoId && (
-            <span className="player-venmo-id">@{player.venmoId}</span>
-          )}
+            <span className="player-venmo-id">{player.venmoId && '@'}{player.venmoId}</span>
         </div>
       </div>
 
