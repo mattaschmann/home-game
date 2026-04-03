@@ -515,7 +515,6 @@ function App() {
           description: `Using table default ${formatCurrency(defaultAmount)}. Update this amount if this buy-in is different.`,
           defaultAmount,
           confirmLabel: 'Add',
-          confirmTextBuilder: (value) => `Add ${formatCurrency(value)}`,
           allowZero: false
         };
       }
@@ -530,7 +529,6 @@ function App() {
           description: 'Record how much this player cashed out at the end of the game.',
           defaultAmount: stackAmount,
           confirmLabel: 'Save',
-          confirmTextBuilder: (value) => `Save ${formatCurrency(value)}`,
           allowZero: true,
           secondaryActionLabel: hasExisting ? 'Clear Stack' : null
         };
@@ -936,7 +934,6 @@ function App() {
           description={dialogConfig.description}
           defaultAmount={dialogConfig.defaultAmount}
           confirmLabel={dialogConfig.confirmLabel}
-          confirmTextBuilder={dialogConfig.confirmTextBuilder}
           allowZero={dialogConfig.allowZero}
           secondaryActionLabel={dialogConfig.secondaryActionLabel}
           onSecondaryAction={

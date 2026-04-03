@@ -9,7 +9,6 @@ export default function BuyInModal({
   description,
   defaultAmount = 10,
   confirmLabel = 'Add',
-  confirmTextBuilder,
   allowZero = false,
   onConfirm,
   onCancel,
@@ -57,9 +56,6 @@ export default function BuyInModal({
   const resolvedDescription =
     description ??
     `Using table default ${formatCurrency(defaultAmount)}. Update this amount if this buy-in is different.`;
-
-  const formatConfirmText =
-    confirmTextBuilder ?? ((value) => `${confirmLabel} ${formatCurrency(value)}`);
 
   const parsedAmount = parseCurrencyInput(amount);
   const canConfirm =
@@ -120,7 +116,7 @@ export default function BuyInModal({
             onClick={handleConfirm}
             disabled={!canConfirm}
           >
-            {canConfirm ? formatConfirmText(parsedAmount) : confirmLabel}
+            {confirmLabel}
           </button>
         </div>
       </div>
