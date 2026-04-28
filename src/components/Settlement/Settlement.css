@@ -146,25 +146,12 @@
 
 .standing-venmo-link.pay,
 .standing-venmo-link.charge {
-  color: #008cff;;
-}
-
-.standing-venmo-link.is-success {
-  color: #8a939f;
-  background: rgba(255, 255, 255, 0.08);
-  opacity: 0.65;
-  cursor: not-allowed;
-  transform: none;
+  color: #008cff;
 }
 
 .standing-venmo-link:hover {
   opacity: 0.85;
   transform: translateY(-1px);
-}
-
-.standing-venmo-link.is-success:hover {
-  opacity: 0.65;
-  transform: none;
 }
 
 .stack-chip {
