@@ -10,7 +10,7 @@ import {
 } from '../../utils/calculations';
 import './Settlement.css';
 
-const buildVenmoLink = ({ handle, net, sessionName, noteOverride }) => {
+const buildVenmoLink = ({ handle, net, noteOverride }) => {
   if (!handle || typeof net !== 'number' || Math.abs(net) < 0.01) {
     return null;
   }
@@ -46,7 +46,7 @@ const VenmoIcon = () => (
   </svg>
 );
 
-export default function Settlement({ players, onRequestStackEntry, sessionName }) {
+export default function Settlement({ players, onRequestStackEntry }) {
   const summary = useMemo(() => {
     const totalInvested = calculateTotalPot(players);
     const totalCashedOut = calculateTotalCashedOut(players);
@@ -67,7 +67,7 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
           finalStackAmount,
           net,
           venmoHandle,
-          venmoLink: buildVenmoLink({ handle: venmoHandle, net, sessionName }),
+          venmoLink: buildVenmoLink({ handle: venmoHandle, net }),
           display: formatNetAmount(net)
         };
       });
@@ -78,7 +78,7 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
       difference,
       standings
     };
-  }, [players, sessionName]);
+  }, [players]);
 
   const isBalanced = Math.abs(summary.difference) < 0.01;
 
@@ -94,15 +94,35 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
     const venmoLink = standing.venmoLink;
 
     if (isMobile) {
-      // Attempt deep link first; fall back to web link shortly after.
-      window.location.href = venmoLink.appUrl;
-      window.setTimeout(() => {
+      // Attempt deep link first; only fall back if app switch does not happen.
+      let fallbackTimerId = null;
+      const clearFallback = () => {
+        if (fallbackTimerId !== null) {
+          window.clearTimeout(fallbackTimerId);
+          fallbackTimerId = null;
+        }
+      };
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'hidden') {
+          clearFallback();
+          window.removeEventListener('visibilitychange', handleVisibilityChange);
+          window.removeEventListener('pagehide', clearFallback);
+        }
+      };
+
+      window.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('pagehide', clearFallback, { once: true });
+
+      fallbackTimerId = window.setTimeout(() => {
+        window.removeEventListener('visibilitychange', handleVisibilityChange);
         window.location.href = venmoLink.webUrl;
-      }, 400);
+      }, 1400);
+
+      window.location.href = venmoLink.appUrl;
       return;
     }
 
-    window.location.href = venmoLink.webUrl;
+    window.open(venmoLink.webUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
