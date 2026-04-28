@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   calculateTotalPot,
   calculateTotalCashedOut,
@@ -15,7 +15,7 @@ const buildVenmoLink = ({ handle, net, sessionName, noteOverride }) => {
     return null;
   }
 
-  const normalizedHandle = handle.replace(/^@+/, '').trim();
+  const normalizedHandle = handle.replace(/^[@,\s]+/, '').trim();
   if (!normalizedHandle) {
     return null;
   }
@@ -46,7 +46,68 @@ const VenmoIcon = () => (
   </svg>
 );
 
+const buildVenmoPaymentKey = ({ playerId, txn }) => {
+  if (!playerId || !txn) {
+    return null;
+  }
+
+  return `${playerId}:${txn}`;
+};
+
+const readVenmoCallbackStatus = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get('venmo_status');
+  const playerId = (params.get('venmo_player') ?? '').replace(/^,+/, '').trim();
+  const txnRaw = (params.get('venmo_txn') ?? '').replace(/^,+/, '').trim().toLowerCase();
+  const txn = txnRaw === 'pay' || txnRaw === 'charge' ? txnRaw : '';
+
+  if (status !== 'success' || !playerId || !txn) {
+    return null;
+  }
+
+  return { playerId, txn };
+};
+
 export default function Settlement({ players, onRequestStackEntry, sessionName }) {
+  const [venmoPaymentStatusByKey, setVenmoPaymentStatusByKey] = useState(() => ({}));
+  const lastSettlementByPlayerRef = useRef({});
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const callbackStatus = readVenmoCallbackStatus();
+    if (!callbackStatus) {
+      return;
+    }
+
+    const paymentKey = buildVenmoPaymentKey(callbackStatus);
+
+    setVenmoPaymentStatusByKey((prev) => {
+      if (prev[paymentKey] === 'success') {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [paymentKey]: 'success'
+      };
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    params.delete('venmo_status');
+    params.delete('venmo_player');
+    params.delete('venmo_txn');
+    const search = params.toString();
+    const nextUrl = `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`;
+    window.history.replaceState({}, '', nextUrl);
+  }, []);
+
   const summary = useMemo(() => {
     const totalInvested = calculateTotalPot(players);
     const totalCashedOut = calculateTotalCashedOut(players);
@@ -59,6 +120,8 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
         const finalStackAmount = parseCurrencyInput(finalStackRaw);
         const net = calculateNetAmount(finalStackAmount, invested);
         const venmoHandle = player.venmoId ?? '';
+        const venmoTxn = net > 0 ? 'pay' : 'charge';
+        const venmoPaymentKey = buildVenmoPaymentKey({ playerId: player.id, txn: venmoTxn });
         return {
           id: player.id,
           name: player.name,
@@ -68,6 +131,8 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
           net,
           venmoHandle,
           venmoLink: buildVenmoLink({ handle: venmoHandle, net, sessionName }),
+          venmoPaymentKey,
+          venmoPaymentStatus: venmoPaymentKey ? (venmoPaymentStatusByKey[venmoPaymentKey] ?? 'idle') : 'idle',
           display: formatNetAmount(net)
         };
       });
@@ -78,9 +143,66 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
       difference,
       standings
     };
-  }, [players, sessionName]);
+  }, [players, sessionName, venmoPaymentStatusByKey]);
 
   const isBalanced = Math.abs(summary.difference) < 0.01;
+
+  useEffect(() => {
+    const nextSnapshot = {};
+    const changedPlayerIds = [];
+
+    summary.standings.forEach((standing) => {
+      const txn = standing.net > 0 ? 'pay' : 'charge';
+      const netRounded = Math.round(standing.net * 100) / 100;
+      const snapshot = {
+        finalStackRaw: standing.finalStackRaw,
+        netRounded,
+        txn
+      };
+
+      nextSnapshot[standing.id] = snapshot;
+
+      const previous = lastSettlementByPlayerRef.current[standing.id];
+      if (!previous) {
+        return;
+      }
+
+      if (
+        previous.finalStackRaw !== snapshot.finalStackRaw ||
+        previous.netRounded !== snapshot.netRounded ||
+        previous.txn !== snapshot.txn
+      ) {
+        changedPlayerIds.push(standing.id);
+      }
+    });
+
+    if (changedPlayerIds.length > 0) {
+      setVenmoPaymentStatusByKey((prev) => {
+        let didChange = false;
+        const next = { ...prev };
+
+        changedPlayerIds.forEach((playerId) => {
+          const payKey = buildVenmoPaymentKey({ playerId, txn: 'pay' });
+          const chargeKey = buildVenmoPaymentKey({ playerId, txn: 'charge' });
+
+          if (payKey && next[payKey]) {
+            delete next[payKey];
+            didChange = true;
+          }
+
+          if (chargeKey && next[chargeKey]) {
+            delete next[chargeKey];
+            didChange = true;
+          }
+        });
+
+        return didChange ? next : prev;
+      });
+    }
+
+    lastSettlementByPlayerRef.current = nextSnapshot;
+  }, [summary.standings]);
+
   const handleVenmoLinkClick = async (event, standing) => {
     if (!standing?.venmoLink || typeof window === 'undefined') {
       return;
@@ -88,13 +210,12 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
 
     event.preventDefault();
 
+    if (standing.venmoPaymentStatus === 'success') {
+      return;
+    }
+
     const hasNavigator = typeof navigator !== 'undefined';
     const isMobile = hasNavigator && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    let venmoWindow = null;
-
-    if (!isMobile) {
-      venmoWindow = window.open('', '_blank', 'noopener,noreferrer');
-    }
 
     let venmoLink = standing.venmoLink;
 
@@ -102,21 +223,29 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
       return;
     }
 
+    const nextParams = new URLSearchParams(window.location.search);
+    nextParams.set('venmo_status', 'success');
+    nextParams.set('venmo_player', standing.id);
+    nextParams.set('venmo_txn', venmoLink.txn);
+    const nextSearch = nextParams.toString();
+    const returnUrl = `${window.location.origin}${window.location.pathname}?${nextSearch}${window.location.hash}`;
+    const encodedReturnUrl = encodeURIComponent(returnUrl);
+    venmoLink = {
+      ...venmoLink,
+      appUrl: `${venmoLink.appUrl}&callback_url=${encodedReturnUrl}`,
+      webUrl: `${venmoLink.webUrl}&callback_url=${encodedReturnUrl}`
+    };
+
     if (isMobile) {
       // Attempt deep link first; fall back to web link shortly after.
       window.location.href = venmoLink.appUrl;
       window.setTimeout(() => {
-        window.open(venmoLink.webUrl, '_blank', 'noopener,noreferrer');
+        window.location.href = venmoLink.webUrl;
       }, 400);
       return;
     }
 
-    if (venmoWindow) {
-      venmoWindow.location.href = venmoLink.webUrl;
-      return;
-    }
-
-    window.open(venmoLink.webUrl, '_blank', 'noopener,noreferrer');
+    window.location.href = venmoLink.webUrl;
   };
 
   return (
@@ -178,17 +307,27 @@ export default function Settlement({ players, onRequestStackEntry, sessionName }
                     {standing.display.text}
                   </span>
                   {standing.venmoLink && (
-                    <a
-                      className={`standing-venmo-link ${standing.venmoLink.txn}`}
-                      href={standing.venmoLink.webUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={standing.venmoLink.label}
-                      title={standing.venmoLink.label}
-                      onClick={(event) => handleVenmoLinkClick(event, standing)}
-                    >
-                      <VenmoIcon />
-                    </a>
+                    standing.venmoPaymentStatus === 'success' ? (
+                      <button
+                        type="button"
+                        className={`standing-venmo-link ${standing.venmoLink.txn} is-success`}
+                        aria-label="Venmo payment complete"
+                        title="Venmo payment complete"
+                        disabled
+                      >
+                        <VenmoIcon />
+                      </button>
+                    ) : (
+                      <a
+                        className={`standing-venmo-link ${standing.venmoLink.txn}`}
+                        href={standing.venmoLink.webUrl}
+                        aria-label={standing.venmoLink.label}
+                        title={standing.venmoLink.label}
+                        onClick={(event) => handleVenmoLinkClick(event, standing)}
+                      >
+                        <VenmoIcon />
+                      </a>
+                    )
                   )}
                 </div>
               </div>
